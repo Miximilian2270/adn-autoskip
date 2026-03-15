@@ -60,6 +60,11 @@ Click the button to open the settings panel.
 - `Pause key`
   - Hotkey for pause/resume (default: `F9`).
 
+Hotkey fields support key capture:
+- Click/focus a hotkey field.
+- Press the desired key combination.
+- `Escape` cancels capture.
+
 ## Intro Shortcut Behavior
 - `Skip intro hotkey`:
   - First tries to click ADN `skip-intro-button`.

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.3.0
+// @version      1.3.1
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -105,6 +105,57 @@
       .replace(/\p{Diacritic}/gu, "")
       .replace(/\s+/g, " ")
       .trim();
+  }
+
+  function normalizeComboString(combo) {
+    return (combo || "")
+      .toLowerCase()
+      .replace(/\s+/g, "")
+      .replace(/\bctrl\b/g, "control");
+  }
+
+  function normalizeEventKey(key) {
+    if (key === " ") return "space";
+    return (key || "").toLowerCase();
+  }
+
+  function eventToCombo(e) {
+    const key = normalizeEventKey(e.key);
+    if (!key || ["control", "shift", "alt", "meta"].includes(key)) return null;
+    const parts = [];
+    if (e.ctrlKey) parts.push("control");
+    if (e.shiftKey) parts.push("shift");
+    if (e.altKey) parts.push("alt");
+    if (e.metaKey) parts.push("meta");
+    parts.push(key);
+    return parts.join("+");
+  }
+
+  function labelFromComboPart(part) {
+    const p = part.toLowerCase();
+    if (p === "control") return "Control";
+    if (p === "shift") return "Shift";
+    if (p === "alt") return "Alt";
+    if (p === "meta") return "Meta";
+    if (p === "space") return "Space";
+    if (p.startsWith("arrow")) return `Arrow${p.slice(5, 6).toUpperCase()}${p.slice(6)}`;
+    if (/^f\d{1,2}$/.test(p)) return p.toUpperCase();
+    if (p.length === 1) return p.toUpperCase();
+    return p.slice(0, 1).toUpperCase() + p.slice(1);
+  }
+
+  function formatComboForDisplay(combo) {
+    return normalizeComboString(combo)
+      .split("+")
+      .filter(Boolean)
+      .map(labelFromComboPart)
+      .join("+");
+  }
+
+  function matchesCombo(e, combo) {
+    const eventCombo = eventToCombo(e);
+    if (!eventCombo) return false;
+    return normalizeComboString(eventCombo) === normalizeComboString(combo);
   }
 
   function getElementText(el) {
@@ -271,6 +322,61 @@
       saveSettings({ [key]: value });
     });
     input.dataset.settingKey = key;
+    return input;
+  }
+
+  function makeHotkeyInput(key, width = 120) {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.readOnly = true;
+    input.className = "adn-auto-input";
+    input.value = formatComboForDisplay(settings[key] || "");
+    input.style.width = `${width}px`;
+    input.style.cursor = "pointer";
+    input.title = "Click and press key combination";
+
+    const exitCapture = () => {
+      input.dataset.capturing = "0";
+      input.value = formatComboForDisplay(settings[key] || "");
+      input.blur();
+    };
+
+    input.addEventListener("focus", () => {
+      input.dataset.capturing = "1";
+      input.value = "Press keys...";
+    });
+
+    input.addEventListener("click", () => {
+      input.focus();
+    });
+
+    input.addEventListener("blur", () => {
+      if (input.dataset.capturing === "1") {
+        input.dataset.capturing = "0";
+        input.value = formatComboForDisplay(settings[key] || "");
+      }
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (input.dataset.capturing !== "1") return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (e.key === "Escape") {
+        exitCapture();
+        return;
+      }
+
+      const combo = eventToCombo(e);
+      if (!combo) return;
+      const formatted = formatComboForDisplay(combo);
+      saveSettings({ [key]: formatted });
+      input.value = formatted;
+      exitCapture();
+    });
+
+    input.dataset.settingKey = key;
+    input.dataset.capturing = "0";
     return input;
   }
 
@@ -486,8 +592,8 @@
         { value: "dark", label: "Dark" },
         { value: "light", label: "Light" },
       ])),
-      makeRow("Skip intro hotkey", makeText("introSkipKey", 180)),
-      makeRow("Jump to intro start hotkey", makeText("introBackKey", 180)),
+      makeRow("Skip intro hotkey", makeHotkeyInput("introSkipKey", 180)),
+      makeRow("Jump to intro start hotkey", makeHotkeyInput("introBackKey", 180)),
       makeRow("Jump seconds (+/-)", makeInteger("jumpSeconds", 1, 600)),
       makeRow("Pause duration (min)", makeNumber("pauseMinutes", 1, 180, 1)),
       makeRow("Skip Intro", makeCheckbox("skipIntro")),
@@ -496,8 +602,8 @@
       makeRow("Skip Next Episode", makeCheckbox("skipNextEpisode")),
       makeRow("Require player context", makeCheckbox("requirePlayerContext")),
       makeRow("Debug logs", makeCheckbox("debug")),
-      makeRow("Toggle key", makeText("toggleKey", 120)),
-      makeRow("Pause key", makeText("pauseKey", 120)),
+      makeRow("Toggle key", makeHotkeyInput("toggleKey", 120)),
+      makeRow("Pause key", makeHotkeyInput("pauseKey", 120)),
     ];
 
     pauseLabel = document.createElement("div");
@@ -561,22 +667,6 @@
   }
 
   function setupHotkeys() {
-    const normalizeComboString = (combo) => (combo || "").toLowerCase().replace(/\s+/g, "");
-    const normalizeEventKey = (key) => {
-      if (key === " ") return "space";
-      return (key || "").toLowerCase();
-    };
-    const eventToCombo = (e) => {
-      const parts = [];
-      if (e.ctrlKey) parts.push("control");
-      if (e.shiftKey) parts.push("shift");
-      if (e.altKey) parts.push("alt");
-      if (e.metaKey) parts.push("meta");
-      parts.push(normalizeEventKey(e.key));
-      return parts.join("+");
-    };
-    const matchesCombo = (e, combo) => normalizeComboString(eventToCombo(e)) === normalizeComboString(combo);
-
     const trySkipIntroViaButton = () => {
       const btn = document.querySelector('a[data-testid="skip-intro-button"], button[data-testid="skip-intro-button"]');
       if (!btn || !isVisible(btn)) return false;
@@ -611,12 +701,12 @@
     document.addEventListener("keydown", (e) => {
       if ((e.target instanceof HTMLInputElement) || (e.target instanceof HTMLTextAreaElement) || e.target?.isContentEditable) return;
 
-      if (e.key === settings.toggleKey) {
+      if (matchesCombo(e, settings.toggleKey)) {
         e.preventDefault();
         saveSettings({ enabled: !settings.enabled });
         log("Toggled enabled:", settings.enabled);
       }
-      if (e.key === settings.pauseKey) {
+      if (matchesCombo(e, settings.pauseKey)) {
         e.preventDefault();
         if (isTemporarilyPaused()) resumeNow();
         else pauseForMinutes(settings.pauseMinutes);

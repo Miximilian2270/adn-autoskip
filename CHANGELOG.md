@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.1
+- Added click-to-capture hotkey inputs (no manual text typing required).
+- Hotkey fields now record key combos directly from keyboard input.
+- Toggle/pause hotkeys now use the same combo parser as intro shortcuts.
+- Improved panel width and hotkey field widths for better combo visibility.
+
 ## 1.3.0
 - Added configurable intro shortcut keys:
   - `Skip intro hotkey` (default: `Control+ArrowRight`)

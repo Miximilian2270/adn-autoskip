@@ -29,6 +29,7 @@ The script includes a built-in settings panel with delay, theme switch (dark/lig
 1. Open an episode on ADN.
 2. Click the floating button in the bottom-right corner (`SKIP ON`).
 3. Configure settings in the panel.
+4. For hotkeys, click the hotkey field and press the desired key combo.
 
 ### Default Hotkeys
 - `F8`: toggle auto skip ON/OFF
