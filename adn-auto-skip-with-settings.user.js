@@ -344,6 +344,15 @@
         borderRadius: "6px",
       });
       if (el instanceof HTMLInputElement && el.type === "checkbox") {
+        el.style.appearance = "auto";
+        el.style.webkitAppearance = "checkbox";
+        el.style.background = "transparent";
+        el.style.border = "none";
+        el.style.borderRadius = "0";
+        el.style.width = "18px";
+        el.style.height = "18px";
+        el.style.cursor = "pointer";
+        el.style.margin = "0";
         el.style.accentColor = theme.accent;
       }
     });
