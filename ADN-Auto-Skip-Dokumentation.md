@@ -2,7 +2,7 @@
 
 Diese Dokumentation bezieht sich auf:
 - Script: `adn-auto-skip-with-settings.user.js`
-- Version: `1.1.0`
+- Version: `1.2.0`
 
 ## Zweck
 Das Userscript klickt auf ADN automatisch nur diese bekannten Skip-Buttons:
@@ -34,6 +34,9 @@ Klick auf den Button öffnet das Einstellungs-Panel.
 - `Delay (ms)`
   - Verzögerung vor dem Klick auf den Skip-Button.
   - Beispiel: `3500` = 3,5 Sekunden.
+- `Panel Theme`
+  - Schaltet das Einstellungs-Panel zwischen `Dark` und `Light`.
+  - Standard ist `Dark`.
 - `Pause duration (min)`
   - Dauer für temporäres Pausieren.
   - Wird von `Pause` und `F9` genutzt.

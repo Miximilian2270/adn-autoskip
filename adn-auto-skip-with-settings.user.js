@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.1.0
+// @version      1.2.0
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @match        *://*.animationdigitalnetwork.com/*
 // @grant        none
@@ -15,6 +15,7 @@
   const DEFAULTS = {
     enabled: true,
     delayMs: 150,
+    uiTheme: "dark",
     pauseMinutes: 5,
     pauseKey: "F9",
     pausedUntilTs: 0,
@@ -45,6 +46,7 @@
   let skipLoopTimer = null;
   let clickCooldown = new WeakMap();
   let pauseLabel = null;
+  let titleEl = null;
 
   function log(...args) {
     if (settings.debug) console.log("[ADN AutoSkip]", ...args);
@@ -193,6 +195,7 @@
 
   function makeRow(label, input) {
     const row = document.createElement("label");
+    row.className = "adn-auto-row";
     row.style.display = "flex";
     row.style.justifyContent = "space-between";
     row.style.alignItems = "center";
@@ -207,6 +210,7 @@
   function makeCheckbox(key) {
     const input = document.createElement("input");
     input.type = "checkbox";
+    input.className = "adn-auto-input";
     input.checked = !!settings[key];
     input.addEventListener("change", () => saveSettings({ [key]: input.checked }));
     input.dataset.settingKey = key;
@@ -216,6 +220,7 @@
   function makeNumber(key, min, max, step = 1) {
     const input = document.createElement("input");
     input.type = "number";
+    input.className = "adn-auto-input";
     input.min = String(min);
     input.max = String(max);
     input.step = String(step);
@@ -239,6 +244,7 @@
   function makeText(key) {
     const input = document.createElement("input");
     input.type = "text";
+    input.className = "adn-auto-input";
     input.value = settings[key];
     input.style.width = "90px";
     input.addEventListener("change", () => {
@@ -250,8 +256,106 @@
     return input;
   }
 
+  function makeSelect(key, options) {
+    const select = document.createElement("select");
+    select.className = "adn-auto-input";
+    options.forEach((opt) => {
+      const option = document.createElement("option");
+      option.value = opt.value;
+      option.textContent = opt.label;
+      select.appendChild(option);
+    });
+    select.value = settings[key];
+    select.addEventListener("change", () => saveSettings({ [key]: select.value }));
+    select.dataset.settingKey = key;
+    return select;
+  }
+
   let panel = null;
   let gear = null;
+
+  function getThemePalette(theme) {
+    if (theme === "light") {
+      return {
+        panelBg: "#ffffff",
+        panelText: "#111111",
+        panelBorder: "#444444",
+        gearBg: "#ffffff",
+        gearText: "#111111",
+        gearBorder: "#444444",
+        inputBg: "#ffffff",
+        inputText: "#111111",
+        inputBorder: "#888888",
+        btnBg: "#f7f7f7",
+        btnText: "#111111",
+        btnBorder: "#444444",
+        muted: "#444444",
+        accent: "#246bff",
+        shadow: "0 6px 24px rgba(0,0,0,.3)",
+      };
+    }
+    return {
+      panelBg: "#121826",
+      panelText: "#eaf0ff",
+      panelBorder: "#33415f",
+      gearBg: "#121826",
+      gearText: "#eaf0ff",
+      gearBorder: "#33415f",
+      inputBg: "#0d1422",
+      inputText: "#eaf0ff",
+      inputBorder: "#44557a",
+      btnBg: "#1c2940",
+      btnText: "#eaf0ff",
+      btnBorder: "#44557a",
+      muted: "#9fb0d1",
+      accent: "#6ea8ff",
+      shadow: "0 8px 28px rgba(0,0,0,.55)",
+    };
+  }
+
+  function applyTheme() {
+    if (!panel || !gear) return;
+    const theme = getThemePalette(settings.uiTheme);
+
+    Object.assign(gear.style, {
+      border: `1px solid ${theme.gearBorder}`,
+      background: theme.gearBg,
+      color: theme.gearText,
+      boxShadow: theme.shadow,
+    });
+    Object.assign(panel.style, {
+      border: `1px solid ${theme.panelBorder}`,
+      background: theme.panelBg,
+      color: theme.panelText,
+      boxShadow: theme.shadow,
+    });
+    if (titleEl) titleEl.style.color = theme.panelText;
+    if (pauseLabel) pauseLabel.style.color = theme.muted;
+
+    panel.querySelectorAll(".adn-auto-row").forEach((row) => {
+      row.style.color = theme.panelText;
+    });
+
+    panel.querySelectorAll(".adn-auto-input").forEach((el) => {
+      Object.assign(el.style, {
+        background: theme.inputBg,
+        color: theme.inputText,
+        border: `1px solid ${theme.inputBorder}`,
+        borderRadius: "6px",
+      });
+      if (el instanceof HTMLInputElement && el.type === "checkbox") {
+        el.style.accentColor = theme.accent;
+      }
+    });
+
+    panel.querySelectorAll(".adn-auto-btn").forEach((btn) => {
+      Object.assign(btn.style, {
+        border: `1px solid ${theme.btnBorder}`,
+        background: theme.btnBg,
+        color: theme.btnText,
+      });
+    });
+  }
 
   function refreshPanelValues() {
     if (!panel) return;
@@ -277,6 +381,7 @@
       else if (isTemporarilyPaused()) gear.textContent = "SKIP PAUSED";
       else gear.textContent = "SKIP ON";
     }
+    applyTheme();
   }
 
   function addSettingsUi() {
@@ -320,14 +425,18 @@
       display: "none",
     });
 
-    const title = document.createElement("div");
-    title.textContent = "ADN Auto Skip";
-    title.style.fontWeight = "700";
-    title.style.marginBottom = "8px";
+    titleEl = document.createElement("div");
+    titleEl.textContent = "ADN Auto Skip";
+    titleEl.style.fontWeight = "700";
+    titleEl.style.marginBottom = "8px";
 
     const rows = [
       makeRow("Enable Auto Skip", makeCheckbox("enabled")),
       makeRow("Delay (ms)", makeNumber("delayMs", 0, 60000, 50)),
+      makeRow("Panel Theme", makeSelect("uiTheme", [
+        { value: "dark", label: "Dark" },
+        { value: "light", label: "Light" },
+      ])),
       makeRow("Pause duration (min)", makeNumber("pauseMinutes", 1, 180, 1)),
       makeRow("Skip Intro", makeCheckbox("skipIntro")),
       makeRow("Skip Recap", makeCheckbox("skipRecap")),
@@ -350,24 +459,28 @@
     quick.style.marginTop = "10px";
 
     const resetBtn = document.createElement("button");
+    resetBtn.className = "adn-auto-btn";
     resetBtn.textContent = "Reset";
     resetBtn.addEventListener("click", () => {
       saveSettings({ ...DEFAULTS });
     });
 
     const closeBtn = document.createElement("button");
+    closeBtn.className = "adn-auto-btn";
     closeBtn.textContent = "Close";
     closeBtn.addEventListener("click", () => {
       panel.style.display = "none";
     });
 
     const pauseBtn = document.createElement("button");
+    pauseBtn.className = "adn-auto-btn";
     pauseBtn.textContent = "Pause";
     pauseBtn.addEventListener("click", () => {
       pauseForMinutes(settings.pauseMinutes);
     });
 
     const resumeBtn = document.createElement("button");
+    resumeBtn.className = "adn-auto-btn";
     resumeBtn.textContent = "Resume now";
     resumeBtn.addEventListener("click", () => {
       resumeNow();
@@ -384,7 +497,7 @@
     });
 
     quick.append(resetBtn, pauseBtn, resumeBtn, closeBtn);
-    panel.append(title, ...rows, pauseLabel, quick);
+    panel.append(titleEl, ...rows, pauseLabel, quick);
 
     gear.addEventListener("click", () => {
       panel.style.display = panel.style.display === "none" ? "block" : "none";
