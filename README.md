@@ -33,11 +33,16 @@ The script includes a built-in settings panel with delay, theme switch (dark/lig
 ### Default Hotkeys
 - `F8`: toggle auto skip ON/OFF
 - `F9`: pause/resume temporary skip pause
+- `Control+ArrowRight`: skip intro (or jump forward)
+- `Control+ArrowLeft`: jump to intro start (or jump backward)
 
 ## Settings
 - `Enable Auto Skip`
 - `Delay (ms)`
 - `Panel Theme` (`Dark` / `Light`)
+- `Skip intro hotkey`
+- `Jump to intro start hotkey`
+- `Jump seconds (+/-)`
 - `Pause duration (min)`
 - `Skip Intro`
 - `Skip Recap`

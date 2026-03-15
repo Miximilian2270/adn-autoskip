@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.2.0
+// @version      1.3.0
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -22,6 +22,9 @@
     uiTheme: "dark",
     pauseMinutes: 5,
     pauseKey: "F9",
+    introSkipKey: "Control+ArrowRight",
+    introBackKey: "Control+ArrowLeft",
+    jumpSeconds: 85,
     pausedUntilTs: 0,
     skipIntro: true,
     skipRecap: true,
@@ -51,6 +54,7 @@
   let clickCooldown = new WeakMap();
   let pauseLabel = null;
   let titleEl = null;
+  let lastIntroStartTime = null;
 
   function log(...args) {
     if (settings.debug) console.log("[ADN AutoSkip]", ...args);
@@ -138,6 +142,12 @@
     return null;
   }
 
+  function findPrimaryVideo() {
+    const videos = Array.from(document.querySelectorAll("video"));
+    if (!videos.length) return null;
+    return videos.find((v) => !v.paused && v.readyState >= 2) || videos[0];
+  }
+
   function categoryEnabled(category) {
     if (category === "intro") return settings.skipIntro;
     if (category === "recap") return settings.skipRecap;
@@ -162,6 +172,10 @@
       if (!settings.enabled || isTemporarilyPaused() || !isVisible(el)) return;
       if (!canClickNow(el)) return;
       markClicked(el);
+      if (category === "intro") {
+        const v = findPrimaryVideo();
+        if (v) lastIntroStartTime = Math.max(0, v.currentTime || 0);
+      }
       el.click();
       log("Clicked", category, el);
     }, delay);
@@ -256,6 +270,27 @@
       input.value = value;
       saveSettings({ [key]: value });
     });
+    input.dataset.settingKey = key;
+    return input;
+  }
+
+  function makeInteger(key, min, max) {
+    const input = document.createElement("input");
+    input.type = "number";
+    input.className = "adn-auto-input";
+    input.min = String(min);
+    input.max = String(max);
+    input.step = "1";
+    input.value = String(settings[key]);
+    input.style.width = "90px";
+    const commit = () => {
+      const parsed = Number(input.value);
+      const next = Number.isFinite(parsed) ? Math.min(max, Math.max(min, Math.round(parsed))) : DEFAULTS[key];
+      input.value = String(next);
+      saveSettings({ [key]: next });
+    };
+    input.addEventListener("change", commit);
+    input.addEventListener("blur", commit);
     input.dataset.settingKey = key;
     return input;
   }
@@ -450,6 +485,9 @@
         { value: "dark", label: "Dark" },
         { value: "light", label: "Light" },
       ])),
+      makeRow("Skip intro hotkey", makeText("introSkipKey")),
+      makeRow("Jump to intro start hotkey", makeText("introBackKey")),
+      makeRow("Jump seconds (+/-)", makeInteger("jumpSeconds", 1, 600)),
       makeRow("Pause duration (min)", makeNumber("pauseMinutes", 1, 180, 1)),
       makeRow("Skip Intro", makeCheckbox("skipIntro")),
       makeRow("Skip Recap", makeCheckbox("skipRecap")),
@@ -522,6 +560,53 @@
   }
 
   function setupHotkeys() {
+    const normalizeComboString = (combo) => (combo || "").toLowerCase().replace(/\s+/g, "");
+    const normalizeEventKey = (key) => {
+      if (key === " ") return "space";
+      return (key || "").toLowerCase();
+    };
+    const eventToCombo = (e) => {
+      const parts = [];
+      if (e.ctrlKey) parts.push("control");
+      if (e.shiftKey) parts.push("shift");
+      if (e.altKey) parts.push("alt");
+      if (e.metaKey) parts.push("meta");
+      parts.push(normalizeEventKey(e.key));
+      return parts.join("+");
+    };
+    const matchesCombo = (e, combo) => normalizeComboString(eventToCombo(e)) === normalizeComboString(combo);
+
+    const trySkipIntroViaButton = () => {
+      const btn = document.querySelector('a[data-testid="skip-intro-button"], button[data-testid="skip-intro-button"]');
+      if (!btn || !isVisible(btn)) return false;
+      if (!canClickNow(btn)) return false;
+      const v = findPrimaryVideo();
+      if (v) lastIntroStartTime = Math.max(0, v.currentTime || 0);
+      markClicked(btn);
+      btn.click();
+      return true;
+    };
+
+    const jumpBySeconds = (seconds) => {
+      const v = findPrimaryVideo();
+      if (!v) return false;
+      const max = Number.isFinite(v.duration) ? v.duration : Number.MAX_SAFE_INTEGER;
+      const target = Math.max(0, Math.min(max, (v.currentTime || 0) + seconds));
+      v.currentTime = target;
+      return true;
+    };
+
+    const jumpToIntroStart = () => {
+      const v = findPrimaryVideo();
+      if (!v) return false;
+      if (typeof lastIntroStartTime === "number") {
+        const max = Number.isFinite(v.duration) ? v.duration : Number.MAX_SAFE_INTEGER;
+        v.currentTime = Math.max(0, Math.min(max, lastIntroStartTime));
+        return true;
+      }
+      return jumpBySeconds(-Math.abs(Number(settings.jumpSeconds) || DEFAULTS.jumpSeconds));
+    };
+
     document.addEventListener("keydown", (e) => {
       if ((e.target instanceof HTMLInputElement) || (e.target instanceof HTMLTextAreaElement) || e.target?.isContentEditable) return;
 
@@ -534,6 +619,16 @@
         e.preventDefault();
         if (isTemporarilyPaused()) resumeNow();
         else pauseForMinutes(settings.pauseMinutes);
+      }
+      if (matchesCombo(e, settings.introSkipKey)) {
+        e.preventDefault();
+        if (!trySkipIntroViaButton()) {
+          jumpBySeconds(Math.abs(Number(settings.jumpSeconds) || DEFAULTS.jumpSeconds));
+        }
+      }
+      if (matchesCombo(e, settings.introBackKey)) {
+        e.preventDefault();
+        jumpToIntroStart();
       }
     }, true);
   }

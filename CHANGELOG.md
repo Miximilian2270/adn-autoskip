@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0
+- Added configurable intro shortcut keys:
+  - `Skip intro hotkey` (default: `Control+ArrowRight`)
+  - `Jump to intro start hotkey` (default: `Control+ArrowLeft`)
+- Added configurable `Jump seconds (+/-)` fallback (default: `85`).
+- `Skip intro hotkey` now clicks ADN intro button if available; otherwise jumps forward by configured seconds.
+- `Jump to intro start hotkey` jumps to detected intro start time; if unavailable, it jumps backward by configured seconds.
+
 ## 1.2.0
 - Added `Panel Theme` setting (`Dark` / `Light`).
 - Improved panel styling for dark mode readability.

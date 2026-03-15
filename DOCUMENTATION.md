@@ -1,6 +1,6 @@
 # Documentation
 
-This document describes the behavior of `adn-auto-skip-with-settings.user.js` (version `1.2.0`).
+This document describes the behavior of `adn-auto-skip-with-settings.user.js` (version `1.3.0`).
 
 ## Purpose
 The userscript auto-clicks known ADN skip controls:
@@ -32,6 +32,15 @@ Click the button to open the settings panel.
   - Delay before clicking a detected skip control.
 - `Panel Theme`
   - `Dark` or `Light` panel appearance.
+- `Skip intro hotkey`
+  - Hotkey combo to trigger intro skipping.
+  - Default: `Control+ArrowRight`.
+- `Jump to intro start hotkey`
+  - Hotkey combo to jump back to detected intro start.
+  - Default: `Control+ArrowLeft`.
+- `Jump seconds (+/-)`
+  - Fallback jump amount (seconds) when intro start is not known or intro button is not visible.
+  - Default: `85`.
 - `Pause duration (min)`
   - Duration used by `Pause` and the pause hotkey.
 - `Skip Intro`
@@ -50,6 +59,14 @@ Click the button to open the settings panel.
   - Hotkey for global enable/disable (default: `F8`).
 - `Pause key`
   - Hotkey for pause/resume (default: `F9`).
+
+## Intro Shortcut Behavior
+- `Skip intro hotkey`:
+  - First tries to click ADN `skip-intro-button`.
+  - If the button is not available, jumps forward by `Jump seconds (+/-)`.
+- `Jump to intro start hotkey`:
+  - Jumps to the stored intro start timestamp (captured when intro skip is triggered).
+  - If no intro timestamp is known, jumps backward by `Jump seconds (+/-)`.
 
 ## Panel Buttons
 - `Reset`
