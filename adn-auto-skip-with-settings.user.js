@@ -3,7 +3,11 @@
 // @namespace    local.adn.autoskip
 // @version      1.2.0
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
+// @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
+// @homepageURL  https://github.com/Miximilian2270/adn-autoskip
+// @supportURL   https://github.com/Miximilian2270/adn-autoskip/issues
+// @license      MIT
 // @grant        none
 // @run-at       document-idle
 // ==/UserScript==

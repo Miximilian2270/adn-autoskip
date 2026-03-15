@@ -1,3 +1,65 @@
-# adn-autoskip
-Autoskip for ADN with Settings
-- Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
+# ADN Auto Skip with Settings
+
+Tampermonkey userscript for [Animation Digital Network (ADN)](https://www.animationdigitalnetwork.com/) that automatically skips:
+- intro
+- recap
+- ending/credits
+- next episode
+
+The script includes a built-in settings panel with delay, theme switch (dark/light), hotkeys, and temporary pause controls.
+
+## Features
+- ADN-focused strict matching using known `data-testid` selectors
+- Adjustable skip delay (e.g. `3500 ms`)
+- Toggle individual skip categories
+- Temporary pause with configurable duration
+- Hotkeys for enable/disable and pause/resume
+- Floating quick-access control (`SKIP ON/OFF/PAUSED`)
+- Dark/Light settings panel theme
+- Automatic local persistence via `localStorage`
+
+## Installation
+1. Install [Tampermonkey](https://www.tampermonkey.net/).
+2. Open `adn-auto-skip-with-settings.user.js`.
+3. Copy the full script content.
+4. In Tampermonkey, create a new script and paste the content.
+5. Save and reload ADN.
+
+## Usage
+1. Open an episode on ADN.
+2. Click the floating button in the bottom-right corner (`SKIP ON`).
+3. Configure settings in the panel.
+
+### Default Hotkeys
+- `F8`: toggle auto skip ON/OFF
+- `F9`: pause/resume temporary skip pause
+
+## Settings
+- `Enable Auto Skip`
+- `Delay (ms)`
+- `Panel Theme` (`Dark` / `Light`)
+- `Pause duration (min)`
+- `Skip Intro`
+- `Skip Recap`
+- `Skip Credits/Ending`
+- `Skip Next Episode`
+- `Require player context`
+- `Debug logs`
+- `Toggle key`
+- `Pause key`
+
+## Technical Notes
+- Storage key: `ADN_AUTO_SKIP_SETTINGS_V1`
+- Supported ADN controls are identified via:
+  - `skip-intro-button`
+  - `skip-recap-button`
+  - `skip-ending-button`
+  - `next-video-button`
+
+## Documentation
+- Full docs: [`DOCUMENTATION.md`](./DOCUMENTATION.md)
+- Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
+
+## Disclaimer
+This project is unofficial and not affiliated with ADN.
+Use at your own risk. Website changes may require selector updates.
