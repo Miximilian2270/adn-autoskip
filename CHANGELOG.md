@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.2
+- Added explicit inspiration/reference links to:
+  - Crunchyroll Auto Skip with Settings (Greasy Fork)
+  - MALSync (GitHub)
+- Added build note indicating GPT-5.3-Codex assistance.
+
 ## 1.3.1
 - Added click-to-capture hotkey inputs (no manual text typing required).
 - Hotkey fields now record key combos directly from keyboard input.

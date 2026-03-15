@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.3.1
+// @version      1.3.2
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -11,6 +11,13 @@
 // @grant        none
 // @run-at       document-idle
 // ==/UserScript==
+
+// Inspiration:
+// - Crunchyroll Auto Skip with Settings:
+//   https://greasyfork.org/de/scripts/513644-crunchyroll-auto-skip-with-settings
+// - MALSync:
+//   https://github.com/MALSync/MALSync
+// Built with assistance from GPT-5.3-Codex.
 
 (() => {
   "use strict";

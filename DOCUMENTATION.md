@@ -105,3 +105,12 @@ There is no manual save button by design.
 If ADN changes `data-testid` names, update selector mappings in:
 - `ADN_SELECTORS.strictSkipButtons`
 - `classifyFromElement(...)`
+
+## Inspiration and References
+- Crunchyroll Auto Skip with Settings:
+  https://greasyfork.org/de/scripts/513644-crunchyroll-auto-skip-with-settings
+- MALSync:
+  https://github.com/MALSync/MALSync
+
+## Build Note
+Created with assistance from GPT-5.3-Codex.

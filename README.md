@@ -66,6 +66,15 @@ The script includes a built-in settings panel with delay, theme switch (dark/lig
 - Full docs: [`DOCUMENTATION.md`](./DOCUMENTATION.md)
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
+## Inspiration and References
+- Crunchyroll Auto Skip with Settings:
+  [Greasy Fork script](https://greasyfork.org/de/scripts/513644-crunchyroll-auto-skip-with-settings)
+- MALSync:
+  [GitHub repository](https://github.com/MALSync/MALSync)
+
+## Build Note
+This script was created with assistance from GPT-5.3-Codex.
+
 ## Disclaimer
 This project is unofficial and not affiliated with ADN.
 Use at your own risk. Website changes may require selector updates.
