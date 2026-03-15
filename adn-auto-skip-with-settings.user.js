@@ -259,12 +259,12 @@
     return input;
   }
 
-  function makeText(key) {
+  function makeText(key, width = 90) {
     const input = document.createElement("input");
     input.type = "text";
     input.className = "adn-auto-input";
     input.value = settings[key];
-    input.style.width = "90px";
+    input.style.width = `${width}px`;
     input.addEventListener("change", () => {
       const value = (input.value || "").trim() || DEFAULTS[key];
       input.value = value;
@@ -460,7 +460,8 @@
       position: "fixed",
       right: "12px",
       bottom: "54px",
-      width: "320px",
+      width: "430px",
+      maxWidth: "92vw",
       zIndex: "2147483647",
       border: "1px solid #444",
       borderRadius: "12px",
@@ -485,8 +486,8 @@
         { value: "dark", label: "Dark" },
         { value: "light", label: "Light" },
       ])),
-      makeRow("Skip intro hotkey", makeText("introSkipKey")),
-      makeRow("Jump to intro start hotkey", makeText("introBackKey")),
+      makeRow("Skip intro hotkey", makeText("introSkipKey", 180)),
+      makeRow("Jump to intro start hotkey", makeText("introBackKey", 180)),
       makeRow("Jump seconds (+/-)", makeInteger("jumpSeconds", 1, 600)),
       makeRow("Pause duration (min)", makeNumber("pauseMinutes", 1, 180, 1)),
       makeRow("Skip Intro", makeCheckbox("skipIntro")),
@@ -495,8 +496,8 @@
       makeRow("Skip Next Episode", makeCheckbox("skipNextEpisode")),
       makeRow("Require player context", makeCheckbox("requirePlayerContext")),
       makeRow("Debug logs", makeCheckbox("debug")),
-      makeRow("Toggle key", makeText("toggleKey")),
-      makeRow("Pause key", makeText("pauseKey")),
+      makeRow("Toggle key", makeText("toggleKey", 120)),
+      makeRow("Pause key", makeText("pauseKey", 120)),
     ];
 
     pauseLabel = document.createElement("div");
