@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.5.2
+- Added one-time suppression hotkey hint directly in the in-player toggle button text.
+- Hint reflects the currently configured `Suppress current skip once key`.
+
+## 1.5.1
+- Fixed potential UI freeze caused by in-player button update loops.
+- Reduced MutationObserver load by removing global attribute observation.
+- Prevented redundant button text DOM writes.
+
+## 1.5.0
+- Added an in-player temporary toggle button next to visible skip controls:
+  - `Automatisches Uberspringen deaktivieren`
+  - `Auto Skip wieder aktivieren`
+- While temporary toggle is active, auto-clicking is paused for visible skip controls.
+- Temporary toggle resets automatically when no skip control is visible anymore.
+
 ## 1.4.1
 - Fixed one-time suppression reliability:
   - Suppression now also blocks already scheduled delayed auto-clicks.

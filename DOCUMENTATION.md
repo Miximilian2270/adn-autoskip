@@ -83,6 +83,14 @@ Hotkey fields support key capture:
   - Auto-click skips this one button instance.
   - Auto-skip continues normally for later/new buttons.
 
+## In-Player Temporary Toggle Button
+- When a supported ADN skip button is visible, an extra button is injected nearby:
+  - `Automatisches Uberspringen deaktivieren`
+- Clicking it changes state to:
+  - `Auto Skip wieder aktivieren`
+- While active, automatic clicking is paused for currently visible skip controls.
+- The temporary toggle auto-resets once no skip control is visible anymore.
+
 ## Panel Buttons
 - `Reset`
   - Restores defaults.

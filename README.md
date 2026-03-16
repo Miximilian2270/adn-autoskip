@@ -11,6 +11,7 @@ The script includes a built-in settings panel with delay, theme switch (dark/lig
 ## Features
 - ADN-focused strict matching using known `data-testid` selectors
 - Adjustable skip delay (e.g. `3500 ms`)
+- In-player temporary toggle button to pause/resume auto-skip for the current visible skip phase
 - Toggle individual skip categories
 - Temporary pause with configurable duration
 - Hotkeys for enable/disable and pause/resume

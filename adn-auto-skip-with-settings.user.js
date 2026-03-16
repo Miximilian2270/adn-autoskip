@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.4.1
+// @version      1.5.2
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -61,6 +61,8 @@
   let skipLoopTimer = null;
   let clickCooldown = new WeakMap();
   let suppressedCurrentButton = null;
+  let playerNoSkipButton = null;
+  let playerNoSkipActive = false;
   let pauseLabel = null;
   let titleEl = null;
   let lastIntroStartTime = null;
@@ -159,6 +161,15 @@
       .filter(Boolean)
       .map(labelFromComboPart)
       .join("+");
+  }
+
+  function formatComboForButtonHint(combo) {
+    return formatComboForDisplay(combo)
+      .replace(/Control/g, "Ctrl")
+      .replace(/ArrowUp/g, "↑")
+      .replace(/ArrowDown/g, "↓")
+      .replace(/ArrowLeft/g, "←")
+      .replace(/ArrowRight/g, "→");
   }
 
   function matchesCombo(e, combo) {
@@ -261,8 +272,68 @@
     return out;
   }
 
+  function removePlayerNoSkipButton() {
+    if (playerNoSkipButton && playerNoSkipButton.parentNode) {
+      playerNoSkipButton.parentNode.removeChild(playerNoSkipButton);
+    }
+    playerNoSkipButton = null;
+  }
+
+  function updatePlayerNoSkipButtonText() {
+    if (!playerNoSkipButton) return;
+    const onceHint = formatComboForButtonHint(settings.skipCurrentOnceKey || "ArrowDown");
+    const nextText = playerNoSkipActive
+      ? `Auto Skip wieder aktivieren [Einmal: ${onceHint}]`
+      : `Automatisches Uberspringen deaktivieren [Einmal: ${onceHint}]`;
+    if (playerNoSkipButton.textContent !== nextText) {
+      playerNoSkipButton.textContent = nextText;
+    }
+  }
+
+  function ensurePlayerNoSkipButton(candidates) {
+    if (!settings.enabled || !candidates.length) {
+      removePlayerNoSkipButton();
+      if (!candidates.length) playerNoSkipActive = false;
+      return;
+    }
+
+    const anchor = candidates[0]?.el;
+    if (!anchor) return;
+    const container = anchor.parentElement || anchor.closest(ADN_SELECTORS.skipArea);
+    if (!container) return;
+
+    if (!playerNoSkipButton || !document.contains(playerNoSkipButton)) {
+      playerNoSkipButton = document.createElement("button");
+      playerNoSkipButton.type = "button";
+      playerNoSkipButton.className = "adn-auto-btn adn-player-noskip-btn";
+      Object.assign(playerNoSkipButton.style, {
+        marginRight: "8px",
+        padding: "8px 12px",
+        borderRadius: "4px",
+        border: "1px solid #777",
+        background: "#e7e7e7",
+        color: "#111",
+        fontSize: "13px",
+        fontWeight: "600",
+        cursor: "pointer",
+      });
+      playerNoSkipButton.addEventListener("click", () => {
+        playerNoSkipActive = !playerNoSkipActive;
+        updatePlayerNoSkipButtonText();
+      });
+    }
+
+    if (playerNoSkipButton.parentElement !== container) {
+      container.insertBefore(playerNoSkipButton, anchor);
+    }
+    updatePlayerNoSkipButtonText();
+  }
+
   function scanAndSkip() {
-    if (!settings.enabled || isTemporarilyPaused()) return;
+    if (!settings.enabled || isTemporarilyPaused()) {
+      removePlayerNoSkipButton();
+      return;
+    }
 
     if (suppressedCurrentButton) {
       const stillVisible = document.contains(suppressedCurrentButton) && isVisible(suppressedCurrentButton);
@@ -270,6 +341,9 @@
     }
 
     const candidates = getVisibleAutoSkipCandidates();
+    ensurePlayerNoSkipButton(candidates);
+
+    if (playerNoSkipActive) return;
 
     for (const { el, category } of candidates) {
       if (suppressedCurrentButton === el) continue;
@@ -281,7 +355,7 @@
 
   function startObservers() {
     const observer = new MutationObserver(() => scanAndSkip());
-    observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
     skipLoopTimer = window.setInterval(scanAndSkip, 900);
     window.addEventListener("beforeunload", () => {
       observer.disconnect();
