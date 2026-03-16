@@ -41,6 +41,9 @@ Click the button to open the settings panel.
 - `Jump seconds (+/-)`
   - Fallback jump amount (seconds) when intro start is not known or intro button is not visible.
   - Default: `85`.
+- `Suppress current skip once key`
+  - Suppresses exactly the currently visible auto-skip button one time.
+  - Default: `ArrowDown`.
 - `Pause duration (min)`
   - Duration used by `Pause` and the pause hotkey.
 - `Skip Intro`
@@ -72,6 +75,13 @@ Hotkey fields support key capture:
 - `Jump to intro start hotkey`:
   - Jumps to the stored intro start timestamp (captured when intro skip is triggered).
   - If no intro timestamp is known, jumps backward by `Jump seconds (+/-)`.
+
+## One-Time Suppression Behavior
+- When an auto-skip button is currently visible (`Intro` / `Recap` / `Ending` / `Next`):
+  - Press `Suppress current skip once key` (default `ArrowDown`).
+  - The visible button is marked as suppressed.
+  - Auto-click skips this one button instance.
+  - Auto-skip continues normally for later/new buttons.
 
 ## Panel Buttons
 - `Reset`

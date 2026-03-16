@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.3.2
+// @version      1.4.1
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -32,6 +32,7 @@
     introSkipKey: "Control+ArrowRight",
     introBackKey: "Control+ArrowLeft",
     jumpSeconds: 85,
+    skipCurrentOnceKey: "ArrowDown",
     pausedUntilTs: 0,
     skipIntro: true,
     skipRecap: true,
@@ -59,6 +60,7 @@
   let settings = loadSettings();
   let skipLoopTimer = null;
   let clickCooldown = new WeakMap();
+  let suppressedCurrentButton = null;
   let pauseLabel = null;
   let titleEl = null;
   let lastIntroStartTime = null;
@@ -228,6 +230,7 @@
     const delay = Math.max(0, Number(settings.delayMs) || 0);
     window.setTimeout(() => {
       if (!settings.enabled || isTemporarilyPaused() || !isVisible(el)) return;
+      if (suppressedCurrentButton === el) return;
       if (!canClickNow(el)) return;
       markClicked(el);
       if (category === "intro") {
@@ -239,20 +242,37 @@
     }, delay);
   }
 
-  function scanAndSkip() {
-    if (!settings.enabled || isTemporarilyPaused()) return;
+  function getVisibleAutoSkipCandidates() {
     const nodes = Array.from(document.querySelectorAll(ADN_SELECTORS.strictSkipButtons));
+    const out = [];
 
     for (const el of nodes) {
       if (!isVisible(el)) continue;
       if (!inVideoContext(el)) continue;
+      if (!el.closest(ADN_SELECTORS.skipArea)) continue;
 
       const text = getElementText(el);
       if (text.length > 100) continue;
-      if (!el.closest(ADN_SELECTORS.skipArea)) continue;
 
       const category = classifyFromElement(el);
       if (!category || !categoryEnabled(category)) continue;
+      out.push({ el, category });
+    }
+    return out;
+  }
+
+  function scanAndSkip() {
+    if (!settings.enabled || isTemporarilyPaused()) return;
+
+    if (suppressedCurrentButton) {
+      const stillVisible = document.contains(suppressedCurrentButton) && isVisible(suppressedCurrentButton);
+      if (!stillVisible) suppressedCurrentButton = null;
+    }
+
+    const candidates = getVisibleAutoSkipCandidates();
+
+    for (const { el, category } of candidates) {
+      if (suppressedCurrentButton === el) continue;
       if (!canClickNow(el)) continue;
 
       clickAfterDelay(el, category);
@@ -602,6 +622,7 @@
       makeRow("Skip intro hotkey", makeHotkeyInput("introSkipKey", 180)),
       makeRow("Jump to intro start hotkey", makeHotkeyInput("introBackKey", 180)),
       makeRow("Jump seconds (+/-)", makeInteger("jumpSeconds", 1, 600)),
+      makeRow("Suppress current skip once key", makeHotkeyInput("skipCurrentOnceKey", 180)),
       makeRow("Pause duration (min)", makeNumber("pauseMinutes", 1, 180, 1)),
       makeRow("Skip Intro", makeCheckbox("skipIntro")),
       makeRow("Skip Recap", makeCheckbox("skipRecap")),
@@ -705,8 +726,24 @@
       return jumpBySeconds(-Math.abs(Number(settings.jumpSeconds) || DEFAULTS.jumpSeconds));
     };
 
+    const suppressCurrentVisibleSkipOnce = () => {
+      const candidates = getVisibleAutoSkipCandidates();
+      const first = candidates.find((c) => c.el !== suppressedCurrentButton);
+      if (!first) return false;
+      suppressedCurrentButton = first.el;
+      log("Suppressed once:", first.category, first.el);
+      return true;
+    };
+
     document.addEventListener("keydown", (e) => {
       if ((e.target instanceof HTMLInputElement) || (e.target instanceof HTMLTextAreaElement) || e.target?.isContentEditable) return;
+
+      if (matchesCombo(e, settings.skipCurrentOnceKey)) {
+        if (suppressCurrentVisibleSkipOnce()) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
 
       if (matchesCombo(e, settings.toggleKey)) {
         e.preventDefault();

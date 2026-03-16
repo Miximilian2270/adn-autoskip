@@ -36,6 +36,7 @@ The script includes a built-in settings panel with delay, theme switch (dark/lig
 - `F9`: pause/resume temporary skip pause
 - `Control+ArrowRight`: skip intro (or jump forward)
 - `Control+ArrowLeft`: jump to intro start (or jump backward)
+- `ArrowDown`: suppress currently visible auto-skip action once
 
 ## Settings
 - `Enable Auto Skip`
@@ -44,6 +45,7 @@ The script includes a built-in settings panel with delay, theme switch (dark/lig
 - `Skip intro hotkey`
 - `Jump to intro start hotkey`
 - `Jump seconds (+/-)`
+- `Suppress current skip once key`
 - `Pause duration (min)`
 - `Skip Intro`
 - `Skip Recap`

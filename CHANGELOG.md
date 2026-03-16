@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.1
+- Fixed one-time suppression reliability:
+  - Suppression now also blocks already scheduled delayed auto-clicks.
+  - Suppression stays active for the currently visible button instance and clears when that button disappears.
+
+## 1.4.0
+- Added configurable `Suppress current skip once key` (default: `ArrowDown`).
+- Pressing this key while a skip button is visible suppresses that specific button instance one time.
+- Auto-skip resumes normally for new/other buttons.
+
 ## 1.3.2
 - Added explicit inspiration/reference links to:
   - Crunchyroll Auto Skip with Settings (Greasy Fork)
