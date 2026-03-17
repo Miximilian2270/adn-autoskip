@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0
+- Added daily GitHub update check (default: enabled).
+- Added `Daily update check` toggle in settings.
+- `SKIP ON/OFF` floating button now turns red when a newer version is available.
+- Update source:
+  - `https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js`
+
 ## 1.5.2
 - Added one-time suppression hotkey hint directly in the in-player toggle button text.
 - Hint reflects the currently configured `Suppress current skip once key`.

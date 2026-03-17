@@ -58,6 +58,10 @@ Click the button to open the settings panel.
   - Extra filter for video/player container context.
 - `Debug logs`
   - Enables console logs prefixed with `[ADN AutoSkip]`.
+- `Daily update check`
+  - Checks the GitHub script once per day for newer `@version`.
+  - If an update is found, the floating `SKIP` button turns red.
+  - Can be disabled.
 - `Toggle key`
   - Hotkey for global enable/disable (default: `F8`).
 - `Pause key`
@@ -123,6 +127,9 @@ There is no manual save button by design.
 If ADN changes `data-testid` names, update selector mappings in:
 - `ADN_SELECTORS.strictSkipButtons`
 - `classifyFromElement(...)`
+
+Update check source:
+- `https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js`
 
 ## Inspiration and References
 - Crunchyroll Auto Skip with Settings:

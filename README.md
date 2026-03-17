@@ -12,6 +12,7 @@ The script includes a built-in settings panel with delay, theme switch (dark/lig
 - ADN-focused strict matching using known `data-testid` selectors
 - Adjustable skip delay (e.g. `3500 ms`)
 - In-player temporary toggle button to pause/resume auto-skip for the current visible skip phase
+- Optional daily GitHub update check with red update indicator on the floating `SKIP` button
 - Toggle individual skip categories
 - Temporary pause with configurable duration
 - Hotkeys for enable/disable and pause/resume
@@ -54,6 +55,7 @@ The script includes a built-in settings panel with delay, theme switch (dark/lig
 - `Skip Next Episode`
 - `Require player context`
 - `Debug logs`
+- `Daily update check`
 - `Toggle key`
 - `Pause key`
 

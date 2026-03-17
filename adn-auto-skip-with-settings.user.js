@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.5.2
+// @version      1.6.0
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -22,7 +22,10 @@
 (() => {
   "use strict";
 
+  const SCRIPT_VERSION = "1.6.0";
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
+  const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
+  const UPDATE_SOURCE_URL = "https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js";
   const DEFAULTS = {
     enabled: true,
     delayMs: 150,
@@ -41,6 +44,9 @@
     requirePlayerContext: false,
     debug: false,
     toggleKey: "F8",
+    updateCheckEnabled: true,
+    updateLastCheckTs: 0,
+    updateAvailable: false,
   };
 
   const ADN_SELECTORS = {
@@ -66,6 +72,7 @@
   let pauseLabel = null;
   let titleEl = null;
   let lastIntroStartTime = null;
+  let updateCheckTimer = null;
 
   function log(...args) {
     if (settings.debug) console.log("[ADN AutoSkip]", ...args);
@@ -85,9 +92,65 @@
 
   function saveSettings(next) {
     settings = { ...settings, ...next };
+    if (Object.prototype.hasOwnProperty.call(next, "updateCheckEnabled")) {
+      if (!settings.updateCheckEnabled) settings.updateAvailable = false;
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     refreshPanelValues();
+    if (Object.prototype.hasOwnProperty.call(next, "updateCheckEnabled") && settings.updateCheckEnabled) {
+      checkForUpdates(true);
+    }
     log("Settings saved", settings);
+  }
+
+  function compareSemver(a, b) {
+    const ap = String(a).split(".").map((n) => Number(n) || 0);
+    const bp = String(b).split(".").map((n) => Number(n) || 0);
+    const len = Math.max(ap.length, bp.length);
+    for (let i = 0; i < len; i += 1) {
+      const ai = ap[i] || 0;
+      const bi = bp[i] || 0;
+      if (ai > bi) return 1;
+      if (ai < bi) return -1;
+    }
+    return 0;
+  }
+
+  async function checkForUpdates(force = false) {
+    if (!settings.updateCheckEnabled) {
+      if (settings.updateAvailable) saveSettings({ updateAvailable: false });
+      return;
+    }
+
+    const now = Date.now();
+    const last = Number(settings.updateLastCheckTs || 0);
+    if (!force && now - last < UPDATE_CHECK_INTERVAL_MS) return;
+
+    try {
+      const res = await fetch(UPDATE_SOURCE_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Update check failed: ${res.status}`);
+      const text = await res.text();
+      const m = text.match(/@version\s+([0-9.]+)/);
+      if (!m) throw new Error("No @version found in remote script");
+      const remoteVersion = m[1];
+      const hasUpdate = compareSemver(remoteVersion, SCRIPT_VERSION) > 0;
+      saveSettings({ updateLastCheckTs: now, updateAvailable: hasUpdate });
+      log("Update check", { local: SCRIPT_VERSION, remote: remoteVersion, hasUpdate });
+    } catch (err) {
+      saveSettings({ updateLastCheckTs: now });
+      log("Update check error", err);
+    }
+  }
+
+  function startUpdateChecker() {
+    checkForUpdates(false);
+    if (updateCheckTimer) window.clearInterval(updateCheckTimer);
+    updateCheckTimer = window.setInterval(() => {
+      checkForUpdates(false);
+    }, 60 * 60 * 1000);
+    window.addEventListener("beforeunload", () => {
+      if (updateCheckTimer) window.clearInterval(updateCheckTimer);
+    }, { once: true });
   }
 
   function isTemporarilyPaused() {
@@ -612,6 +675,16 @@
     });
   }
 
+  function applyUpdateIndicator() {
+    if (!gear) return;
+    if (settings.updateCheckEnabled && settings.updateAvailable) {
+      gear.style.background = "#9e1f2c";
+      gear.style.color = "#ffffff";
+      gear.style.border = "1px solid #ff8091";
+      gear.style.boxShadow = "0 0 14px rgba(255, 74, 96, .65)";
+    }
+  }
+
   function refreshPanelValues() {
     if (!panel) return;
     panel.querySelectorAll("[data-setting-key]").forEach((el) => {
@@ -637,6 +710,7 @@
       else gear.textContent = "SKIP ON";
     }
     applyTheme();
+    applyUpdateIndicator();
   }
 
   function addSettingsUi() {
@@ -704,6 +778,7 @@
       makeRow("Skip Next Episode", makeCheckbox("skipNextEpisode")),
       makeRow("Require player context", makeCheckbox("requirePlayerContext")),
       makeRow("Debug logs", makeCheckbox("debug")),
+      makeRow("Daily update check", makeCheckbox("updateCheckEnabled")),
       makeRow("Toggle key", makeHotkeyInput("toggleKey", 120)),
       makeRow("Pause key", makeHotkeyInput("pauseKey", 120)),
     ];
@@ -846,6 +921,7 @@
     addSettingsUi();
     startObservers();
     setupHotkeys();
+    startUpdateChecker();
     scanAndSkip();
     log("Loaded", settings);
   }
