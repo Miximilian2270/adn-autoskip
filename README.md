@@ -11,6 +11,9 @@ The script includes a built-in settings panel with delay, theme switch (dark/lig
 ## Features
 - ADN-focused strict matching using known `data-testid` selectors
 - Adjustable skip delay (e.g. `3500 ms`)
+- **Modern Tabbed Settings UI** with sleek toggle switches, categories, and smooth CSS animations
+- **Bilingual Support (English/German)** automatically adjusting based on browser settings
+- Visual feedback directly on the player button when skipping is suppressed via hotkey
 - In-player temporary toggle button to pause/resume auto-skip for the current visible skip phase
 - Optional daily GitHub update check with red update indicator on the floating `SKIP` button
 - Toggle individual skip categories

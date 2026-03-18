@@ -28,7 +28,7 @@
   const UPDATE_SOURCE_URL = "https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js";
   const DEFAULTS = {
     enabled: true,
-    delayMs: 150,
+    delayMs: 3500,
     uiTheme: "dark",
     pauseMinutes: 5,
     pauseKey: "F9",
@@ -345,12 +345,34 @@
   function updatePlayerNoSkipButtonText() {
     if (!playerNoSkipButton) return;
     const onceHint = formatComboForButtonHint(settings.skipCurrentOnceKey || "ArrowDown");
-    const nextText = playerNoSkipActive
-      ? `Auto Skip wieder aktivieren [Einmal: ${onceHint}]`
-      : `Automatisches Uberspringen deaktivieren [Einmal: ${onceHint}]`;
+    const isSuppressed = !!suppressedCurrentButton;
+    const isDe = navigator.language.startsWith("de");
+
+    let nextText = "";
+    let bgColor = "#e7e7e7";
+    let textColor = "#111";
+    let borderColor = "#777";
+
+    if (isSuppressed) {
+      nextText = isDe ? `Überspringen unterdrückt! [Normal Weiter]` : `Skip temporarily suppressed! [Playing Normally]`;
+      bgColor = "#4caf50";
+      textColor = "#fff";
+      borderColor = "#2e7d32";
+    } else if (playerNoSkipActive) {
+      nextText = isDe ? `Auto Skip wieder aktivieren [Einmal: ${onceHint}]` : `Re-enable Auto Skip [Press once: ${onceHint}]`;
+    } else {
+      nextText = isDe ? `Automatisches Überspringen deaktivieren [Einmal: ${onceHint}]` : `Disable Auto Skip [Press once: ${onceHint}]`;
+    }
+
     if (playerNoSkipButton.textContent !== nextText) {
       playerNoSkipButton.textContent = nextText;
     }
+
+    Object.assign(playerNoSkipButton.style, {
+      background: bgColor,
+      color: textColor,
+      borderColor: borderColor
+    });
   }
 
   function ensurePlayerNoSkipButton(candidates) {
@@ -400,7 +422,10 @@
 
     if (suppressedCurrentButton) {
       const stillVisible = document.contains(suppressedCurrentButton) && isVisible(suppressedCurrentButton);
-      if (!stillVisible) suppressedCurrentButton = null;
+      if (!stillVisible) {
+        suppressedCurrentButton = null;
+        updatePlayerNoSkipButtonText();
+      }
     }
 
     const candidates = getVisibleAutoSkipCandidates();
@@ -426,78 +451,317 @@
     }, { once: true });
   }
 
+
+  function injectStyles() {
+    if (document.getElementById("adn-auto-skip-styles")) return;
+    const style = document.createElement("style");
+    style.id = "adn-auto-skip-styles";
+    style.textContent = `
+      :root {
+        --adn-bg: #121826;
+        --adn-text: #eaf0ff;
+        --adn-border: #33415f;
+        --adn-input-bg: #0d1422;
+        --adn-input-border: #44557a;
+        --adn-btn-bg: #1c2940;
+        --adn-btn-hover: #2a3d5e;
+        --adn-accent: #6ea8ff;
+        --adn-muted: #9fb0d1;
+        --adn-shadow: 0 8px 28px rgba(0,0,0,0.55);
+        --adn-danger: #ff4a60;
+      }
+      [data-adn-theme="light"] {
+        --adn-bg: #ffffff;
+        --adn-text: #111111;
+        --adn-border: #dddddd;
+        --adn-input-bg: #f9f9f9;
+        --adn-input-border: #bbbbbb;
+        --adn-btn-bg: #f1f1f1;
+        --adn-btn-hover: #e2e2e2;
+        --adn-accent: #246bff;
+        --adn-muted: #666666;
+        --adn-shadow: 0 6px 24px rgba(0,0,0,0.2);
+      }
+      #adn-auto-skip-gear {
+        position: fixed;
+        right: 15px;
+        bottom: 15px;
+        z-index: 2147483646;
+        background: var(--adn-bg);
+        color: var(--adn-text);
+        border: 1px solid var(--adn-border);
+        border-radius: 12px;
+        padding: 8px 14px;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: var(--adn-shadow);
+        transition: all 0.2s ease;
+      }
+      #adn-auto-skip-gear:hover {
+        transform: translateY(-2px);
+      }
+      #adn-auto-skip-gear.adn-update-available {
+        background: var(--adn-danger);
+        color: #fff;
+        border-color: #ff8091;
+        box-shadow: 0 0 14px rgba(255, 74, 96, 0.65);
+      }
+      #adn-auto-skip-panel {
+        position: fixed;
+        right: 15px;
+        bottom: 60px;
+        width: 380px;
+        max-width: 90vw;
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: 2147483647;
+        background: var(--adn-bg);
+        color: var(--adn-text);
+        border: 1px solid var(--adn-border);
+        border-radius: 12px;
+        padding: 16px;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 13px;
+        box-shadow: var(--adn-shadow);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px);
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        scrollbar-width: thin;
+        scrollbar-color: var(--adn-border) transparent;
+      }
+      #adn-auto-skip-panel.adn-panel-open {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      .adn-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .adn-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 0;
+      }
+      .adn-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid var(--adn-border);
+        padding-bottom: 8px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .adn-tabs::-webkit-scrollbar { display: none; }
+      .adn-tab {
+        background: transparent;
+        border: none;
+        color: var(--adn-muted);
+        padding: 6px 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .adn-tab:hover {
+        color: var(--adn-text);
+        background: var(--adn-btn-bg);
+      }
+      .adn-tab.adn-active {
+        background: var(--adn-accent);
+        color: #fff;
+      }
+      .adn-tab-content {
+        display: none;
+        animation: adn-fade-in 0.2s ease;
+      }
+      .adn-tab-content.adn-active {
+        display: block;
+      }
+      @keyframes adn-fade-in {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .adn-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .adn-row-label {
+        flex: 1;
+        padding-right: 12px;
+      }
+      .adn-input {
+        background: var(--adn-input-bg);
+        color: var(--adn-text);
+        border: 1px solid var(--adn-input-border);
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.2s;
+        min-width: 0;
+      }
+      .adn-input:focus {
+        border-color: var(--adn-accent);
+      }
+      .adn-input[type="number"] {
+        width: 70px;
+      }
+      .adn-btn {
+        background: var(--adn-btn-bg);
+        color: var(--adn-text);
+        border: 1px solid var(--adn-border);
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .adn-btn:hover {
+        background: var(--adn-btn-hover);
+      }
+      .adn-close-btn {
+        background: transparent;
+        border: none;
+        color: var(--adn-muted);
+        cursor: pointer;
+        font-size: 18px;
+        padding: 0 4px;
+        line-height: 1;
+      }
+      .adn-close-btn:hover {
+        color: var(--adn-text);
+      }
+      .adn-toggle {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 36px;
+        height: 20px;
+        background: var(--adn-input-border);
+        border-radius: 20px;
+        position: relative;
+        cursor: pointer;
+        outline: none;
+        transition: background 0.3s;
+        flex-shrink: 0;
+        margin: 0;
+      }
+      .adn-toggle::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 14px;
+        height: 14px;
+        background: #fff;
+        border-radius: 50%;
+        transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      }
+      .adn-toggle:checked {
+        background: var(--adn-accent);
+      }
+      .adn-toggle:checked::after {
+        transform: translateX(16px);
+      }
+      .adn-footer {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid var(--adn-border);
+      }
+      .adn-footer-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .adn-pause-info {
+        font-size: 12px;
+        color: var(--adn-muted);
+        min-width: 120px;
+      }
+      .adn-quick-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function createElement(tag, className = "", props = {}, children = []) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    for (const [k, v] of Object.entries(props)) el[k] = v;
+    for (const c of children) {
+      if (typeof c === "string") el.appendChild(document.createTextNode(c));
+      else if (c instanceof Node) el.appendChild(c);
+    }
+    return el;
+  }
+
   function makeRow(label, input) {
-    const row = document.createElement("label");
-    row.className = "adn-auto-row";
-    row.style.display = "flex";
-    row.style.justifyContent = "space-between";
-    row.style.alignItems = "center";
-    row.style.gap = "10px";
-    row.style.margin = "8px 0";
-    row.style.fontSize = "13px";
-    row.textContent = label;
-    row.appendChild(input);
-    return row;
+    const lbl = createElement("div", "adn-row-label", {}, [label]);
+    return createElement("label", "adn-row", {}, [lbl, input]);
   }
 
   function makeCheckbox(key) {
-    const input = document.createElement("input");
-    input.type = "checkbox";
-    input.className = "adn-auto-input";
-    input.checked = !!settings[key];
-    input.addEventListener("change", () => saveSettings({ [key]: input.checked }));
+    const input = createElement("input", "adn-toggle", { type: "checkbox", checked: !!settings[key] });
     input.dataset.settingKey = key;
+    input.addEventListener("change", () => saveSettings({ [key]: input.checked }));
     return input;
   }
 
   function makeNumber(key, min, max, step = 1) {
-    const input = document.createElement("input");
-    input.type = "number";
-    input.className = "adn-auto-input";
-    input.min = String(min);
-    input.max = String(max);
-    input.step = String(step);
-    input.value = String(settings[key]);
-    input.style.width = "90px";
-    const persistNumber = (finalize) => {
+    const input = createElement("input", "adn-input", { type: "number", min: String(min), max: String(max), step: String(step), value: String(settings[key]) });
+    input.dataset.settingKey = key;
+    const save = (finalize) => {
       const parsed = Number(input.value);
       if (!Number.isFinite(parsed)) return;
-      let value = parsed;
-      if (finalize) value = Math.min(max, Math.max(min, value));
-      saveSettings({ [key]: value });
-      if (finalize) input.value = String(value);
+      let val = parsed;
+      if (finalize) val = Math.min(max, Math.max(min, val));
+      saveSettings({ [key]: val });
+      if (finalize) input.value = String(val);
     };
-    input.addEventListener("input", () => persistNumber(false));
-    input.addEventListener("change", () => persistNumber(true));
-    input.addEventListener("blur", () => persistNumber(true));
-    input.dataset.settingKey = key;
+    input.addEventListener("input", () => save(false));
+    input.addEventListener("change", () => save(true));
+    input.addEventListener("blur", () => save(true));
     return input;
   }
 
-  function makeText(key, width = 90) {
-    const input = document.createElement("input");
-    input.type = "text";
-    input.className = "adn-auto-input";
-    input.value = settings[key];
-    input.style.width = `${width}px`;
-    input.addEventListener("change", () => {
-      const value = (input.value || "").trim() || DEFAULTS[key];
-      input.value = value;
-      saveSettings({ [key]: value });
+  function makeSelect(key, options) {
+    const select = createElement("select", "adn-input");
+    options.forEach(opt => {
+      select.appendChild(createElement("option", "", { value: opt.value, textContent: opt.label }));
     });
-    input.dataset.settingKey = key;
-    return input;
+    select.value = settings[key];
+    select.dataset.settingKey = key;
+    select.addEventListener("change", () => saveSettings({ [key]: select.value }));
+    return select;
   }
 
   function makeHotkeyInput(key, width = 120) {
-    const input = document.createElement("input");
-    input.type = "text";
-    input.readOnly = true;
-    input.className = "adn-auto-input";
-    input.value = formatComboForDisplay(settings[key] || "");
-    input.style.width = `${width}px`;
+    const input = createElement("input", "adn-input", { type: "text", readOnly: true, value: formatComboForDisplay(settings[key] || "") });
+    input.style.width = width + "px";
     input.style.cursor = "pointer";
     input.title = "Click and press key combination";
+    input.dataset.settingKey = key;
+    input.dataset.capturing = "0";
 
     const exitCapture = () => {
       input.dataset.capturing = "0";
@@ -510,27 +774,17 @@
       input.value = "Press keys...";
     });
 
-    input.addEventListener("click", () => {
-      input.focus();
-    });
+    input.addEventListener("click", () => input.focus());
 
     input.addEventListener("blur", () => {
-      if (input.dataset.capturing === "1") {
-        input.dataset.capturing = "0";
-        input.value = formatComboForDisplay(settings[key] || "");
-      }
+      if (input.dataset.capturing === "1") exitCapture();
     });
 
     input.addEventListener("keydown", (e) => {
       if (input.dataset.capturing !== "1") return;
       e.preventDefault();
       e.stopPropagation();
-
-      if (e.key === "Escape") {
-        exitCapture();
-        return;
-      }
-
+      if (e.key === "Escape") { exitCapture(); return; }
       const combo = eventToCombo(e);
       if (!combo) return;
       const formatted = formatComboForDisplay(combo);
@@ -538,304 +792,153 @@
       input.value = formatted;
       exitCapture();
     });
-
-    input.dataset.settingKey = key;
-    input.dataset.capturing = "0";
     return input;
-  }
-
-  function makeInteger(key, min, max) {
-    const input = document.createElement("input");
-    input.type = "number";
-    input.className = "adn-auto-input";
-    input.min = String(min);
-    input.max = String(max);
-    input.step = "1";
-    input.value = String(settings[key]);
-    input.style.width = "90px";
-    const commit = () => {
-      const parsed = Number(input.value);
-      const next = Number.isFinite(parsed) ? Math.min(max, Math.max(min, Math.round(parsed))) : DEFAULTS[key];
-      input.value = String(next);
-      saveSettings({ [key]: next });
-    };
-    input.addEventListener("change", commit);
-    input.addEventListener("blur", commit);
-    input.dataset.settingKey = key;
-    return input;
-  }
-
-  function makeSelect(key, options) {
-    const select = document.createElement("select");
-    select.className = "adn-auto-input";
-    options.forEach((opt) => {
-      const option = document.createElement("option");
-      option.value = opt.value;
-      option.textContent = opt.label;
-      select.appendChild(option);
-    });
-    select.value = settings[key];
-    select.addEventListener("change", () => saveSettings({ [key]: select.value }));
-    select.dataset.settingKey = key;
-    return select;
   }
 
   let panel = null;
   let gear = null;
 
-  function getThemePalette(theme) {
-    if (theme === "light") {
-      return {
-        panelBg: "#ffffff",
-        panelText: "#111111",
-        panelBorder: "#444444",
-        gearBg: "#ffffff",
-        gearText: "#111111",
-        gearBorder: "#444444",
-        inputBg: "#ffffff",
-        inputText: "#111111",
-        inputBorder: "#888888",
-        btnBg: "#f7f7f7",
-        btnText: "#111111",
-        btnBorder: "#444444",
-        muted: "#444444",
-        accent: "#246bff",
-        shadow: "0 6px 24px rgba(0,0,0,.3)",
-      };
-    }
-    return {
-      panelBg: "#121826",
-      panelText: "#eaf0ff",
-      panelBorder: "#33415f",
-      gearBg: "#121826",
-      gearText: "#eaf0ff",
-      gearBorder: "#33415f",
-      inputBg: "#0d1422",
-      inputText: "#eaf0ff",
-      inputBorder: "#44557a",
-      btnBg: "#1c2940",
-      btnText: "#eaf0ff",
-      btnBorder: "#44557a",
-      muted: "#9fb0d1",
-      accent: "#6ea8ff",
-      shadow: "0 8px 28px rgba(0,0,0,.55)",
-    };
-  }
-
-  function applyTheme() {
-    if (!panel || !gear) return;
-    const theme = getThemePalette(settings.uiTheme);
-
-    Object.assign(gear.style, {
-      border: `1px solid ${theme.gearBorder}`,
-      background: theme.gearBg,
-      color: theme.gearText,
-      boxShadow: theme.shadow,
-    });
-    Object.assign(panel.style, {
-      border: `1px solid ${theme.panelBorder}`,
-      background: theme.panelBg,
-      color: theme.panelText,
-      boxShadow: theme.shadow,
-    });
-    if (titleEl) titleEl.style.color = theme.panelText;
-    if (pauseLabel) pauseLabel.style.color = theme.muted;
-
-    panel.querySelectorAll(".adn-auto-row").forEach((row) => {
-      row.style.color = theme.panelText;
-    });
-
-    panel.querySelectorAll(".adn-auto-input").forEach((el) => {
-      Object.assign(el.style, {
-        background: theme.inputBg,
-        color: theme.inputText,
-        border: `1px solid ${theme.inputBorder}`,
-        borderRadius: "6px",
-      });
-      if (el instanceof HTMLInputElement && el.type === "checkbox") {
-        el.style.appearance = "auto";
-        el.style.webkitAppearance = "checkbox";
-        el.style.background = "transparent";
-        el.style.border = "none";
-        el.style.borderRadius = "0";
-        el.style.width = "18px";
-        el.style.height = "18px";
-        el.style.cursor = "pointer";
-        el.style.margin = "0";
-        el.style.accentColor = theme.accent;
-      }
-    });
-
-    panel.querySelectorAll(".adn-auto-btn").forEach((btn) => {
-      Object.assign(btn.style, {
-        border: `1px solid ${theme.btnBorder}`,
-        background: theme.btnBg,
-        color: theme.btnText,
-      });
-    });
-  }
-
-  function applyUpdateIndicator() {
-    if (!gear) return;
-    if (settings.updateCheckEnabled && settings.updateAvailable) {
-      gear.style.background = "#9e1f2c";
-      gear.style.color = "#ffffff";
-      gear.style.border = "1px solid #ff8091";
-      gear.style.boxShadow = "0 0 14px rgba(255, 74, 96, .65)";
-    }
-  }
-
   function refreshPanelValues() {
     if (!panel) return;
+    document.documentElement.setAttribute("data-adn-theme", settings.uiTheme === "light" ? "light" : "dark");
     panel.querySelectorAll("[data-setting-key]").forEach((el) => {
       const key = el.dataset.settingKey;
       if (document.activeElement === el) return;
-      if (el.type === "checkbox") {
-        el.checked = !!settings[key];
-      } else {
-        el.value = String(settings[key]);
-      }
+      if (el.type === "checkbox") el.checked = !!settings[key];
+      else el.value = String(settings[key]);
     });
+    const isDe = navigator.language.startsWith("de");
     if (pauseLabel) {
       if (isTemporarilyPaused()) {
         const sec = Math.ceil(pauseRemainingMs() / 1000);
-        pauseLabel.textContent = `Paused: ${sec}s remaining`;
+        pauseLabel.textContent = isDe ? `Pausiert: ${sec}s` : `Paused: ${sec}s`;
       } else {
-        pauseLabel.textContent = "Paused: no";
+        pauseLabel.textContent = isDe ? "Auto Skip Aktiv" : "Auto Skip Active";
       }
     }
     if (gear) {
-      if (!settings.enabled) gear.textContent = "SKIP OFF";
-      else if (isTemporarilyPaused()) gear.textContent = "SKIP PAUSED";
-      else gear.textContent = "SKIP ON";
+      if (settings.updateCheckEnabled && settings.updateAvailable) {
+        gear.classList.add("adn-update-available");
+      } else {
+        gear.classList.remove("adn-update-available");
+      }
+
+      if (!settings.enabled) gear.textContent = isDe ? "SKIP AUS" : "SKIP OFF";
+      else if (isTemporarilyPaused()) gear.textContent = isDe ? "SKIP PAUSIERT" : "SKIP PAUSED";
+      else gear.textContent = isDe ? "SKIP AN" : "SKIP ON";
     }
-    applyTheme();
-    applyUpdateIndicator();
   }
 
   function addSettingsUi() {
     if (document.getElementById("adn-auto-skip-gear")) return;
+    injectStyles();
 
-    gear = document.createElement("button");
-    gear.id = "adn-auto-skip-gear";
-    gear.textContent = settings.enabled ? "SKIP ON" : "SKIP OFF";
-    Object.assign(gear.style, {
-      position: "fixed",
-      right: "12px",
-      bottom: "12px",
-      zIndex: "2147483646",
-      border: "1px solid #444",
-      borderRadius: "12px",
-      background: "#fff",
-      color: "#111",
-      padding: "8px 10px",
-      fontSize: "12px",
-      fontFamily: "sans-serif",
-      cursor: "pointer",
-      boxShadow: "0 2px 8px rgba(0,0,0,.25)",
-    });
+    gear = createElement("button", "", { id: "adn-auto-skip-gear", textContent: "SKIP ON" });
 
-    panel = document.createElement("div");
-    panel.id = "adn-auto-skip-panel";
-    Object.assign(panel.style, {
-      position: "fixed",
-      right: "12px",
-      bottom: "54px",
-      width: "430px",
-      maxWidth: "92vw",
-      zIndex: "2147483647",
-      border: "1px solid #444",
-      borderRadius: "12px",
-      background: "#fff",
-      color: "#111",
-      padding: "12px",
-      fontFamily: "sans-serif",
-      fontSize: "13px",
-      boxShadow: "0 6px 24px rgba(0,0,0,.3)",
-      display: "none",
-    });
+    panel = createElement("div", "", { id: "adn-auto-skip-panel" });
 
-    titleEl = document.createElement("div");
-    titleEl.textContent = "ADN Auto Skip";
-    titleEl.style.fontWeight = "700";
-    titleEl.style.marginBottom = "8px";
+    const titleText = createElement("h2", "adn-title", { textContent: "ADN Auto Skip" });
+    const closeBtn = createElement("button", "adn-close-btn", { textContent: "×", title: "Close" });
+    closeBtn.addEventListener("click", () => panel.classList.remove("adn-panel-open"));
+    const header = createElement("div", "adn-header", {}, [titleText, closeBtn]);
 
-    const rows = [
-      makeRow("Enable Auto Skip", makeCheckbox("enabled")),
-      makeRow("Delay (ms)", makeNumber("delayMs", 0, 60000, 50)),
-      makeRow("Panel Theme", makeSelect("uiTheme", [
-        { value: "dark", label: "Dark" },
-        { value: "light", label: "Light" },
-      ])),
-      makeRow("Skip intro hotkey", makeHotkeyInput("introSkipKey", 180)),
-      makeRow("Jump to intro start hotkey", makeHotkeyInput("introBackKey", 180)),
-      makeRow("Jump seconds (+/-)", makeInteger("jumpSeconds", 1, 600)),
-      makeRow("Suppress current skip once key", makeHotkeyInput("skipCurrentOnceKey", 180)),
-      makeRow("Pause duration (min)", makeNumber("pauseMinutes", 1, 180, 1)),
-      makeRow("Skip Intro", makeCheckbox("skipIntro")),
-      makeRow("Skip Recap", makeCheckbox("skipRecap")),
-      makeRow("Skip Credits/Ending", makeCheckbox("skipCredits")),
-      makeRow("Skip Next Episode", makeCheckbox("skipNextEpisode")),
-      makeRow("Require player context", makeCheckbox("requirePlayerContext")),
-      makeRow("Debug logs", makeCheckbox("debug")),
-      makeRow("Daily update check", makeCheckbox("updateCheckEnabled")),
-      makeRow("Toggle key", makeHotkeyInput("toggleKey", 120)),
-      makeRow("Pause key", makeHotkeyInput("pauseKey", 120)),
+    const tabsNav = createElement("div", "adn-tabs");
+    const tabsContentContainer = createElement("div", "adn-tabs-content");
+
+    const tabs = [
+      {
+        id: "tab-general",
+        label: "General",
+        rows: [
+          makeRow("Enable Auto Skip", makeCheckbox("enabled")),
+          makeRow("Delay (ms)", makeNumber("delayMs", 0, 60000, 50)),
+          makeRow("Theme", makeSelect("uiTheme", [{ value: "dark", label: "Dark" }, { value: "light", label: "Light" }])),
+          makeRow("Pause duration (m)", makeNumber("pauseMinutes", 1, 180, 1))
+        ]
+      },
+      {
+        id: "tab-skip",
+        label: "Skipping",
+        rows: [
+          makeRow("Skip Intro", makeCheckbox("skipIntro")),
+          makeRow("Skip Recap", makeCheckbox("skipRecap")),
+          makeRow("Skip Credits/Ending", makeCheckbox("skipCredits")),
+          makeRow("Skip Next Episode", makeCheckbox("skipNextEpisode")),
+          makeRow("Require player context", makeCheckbox("requirePlayerContext")),
+          makeRow("Jump seconds (+/-)", makeNumber("jumpSeconds", 1, 600, 1))
+        ]
+      },
+      {
+        id: "tab-keys",
+        label: "Hotkeys",
+        rows: [
+          makeRow("Skip intro key", makeHotkeyInput("introSkipKey", 100)),
+          makeRow("Jump to start key", makeHotkeyInput("introBackKey", 100)),
+          makeRow("Suppress once key", makeHotkeyInput("skipCurrentOnceKey", 100)),
+          makeRow("Toggle key", makeHotkeyInput("toggleKey", 100)),
+          makeRow("Pause key", makeHotkeyInput("pauseKey", 100))
+        ]
+      },
+      {
+        id: "tab-sys",
+        label: "System",
+        rows: [
+          makeRow("Debug logs", makeCheckbox("debug")),
+          makeRow("Daily update check", makeCheckbox("updateCheckEnabled"))
+        ]
+      }
     ];
 
-    pauseLabel = document.createElement("div");
-    pauseLabel.style.fontSize = "12px";
-    pauseLabel.style.opacity = "0.8";
-    pauseLabel.style.marginTop = "4px";
+    let activeTabBtn = null;
+    let activeTabContent = null;
 
-    const quick = document.createElement("div");
-    quick.style.display = "flex";
-    quick.style.gap = "8px";
-    quick.style.marginTop = "10px";
+    tabs.forEach((tab, index) => {
+      const btn = createElement("button", "adn-tab", { textContent: tab.label });
+      const content = createElement("div", "adn-tab-content", {}, tab.rows);
 
-    const resetBtn = document.createElement("button");
-    resetBtn.className = "adn-auto-btn";
-    resetBtn.textContent = "Reset";
-    resetBtn.addEventListener("click", () => {
-      saveSettings({ ...DEFAULTS });
-    });
+      if (index === 0) {
+        btn.classList.add("adn-active");
+        content.classList.add("adn-active");
+        activeTabBtn = btn;
+        activeTabContent = content;
+      }
 
-    const closeBtn = document.createElement("button");
-    closeBtn.className = "adn-auto-btn";
-    closeBtn.textContent = "Close";
-    closeBtn.addEventListener("click", () => {
-      panel.style.display = "none";
-    });
-
-    const pauseBtn = document.createElement("button");
-    pauseBtn.className = "adn-auto-btn";
-    pauseBtn.textContent = "Pause";
-    pauseBtn.addEventListener("click", () => {
-      pauseForMinutes(settings.pauseMinutes);
-    });
-
-    const resumeBtn = document.createElement("button");
-    resumeBtn.className = "adn-auto-btn";
-    resumeBtn.textContent = "Resume now";
-    resumeBtn.addEventListener("click", () => {
-      resumeNow();
-    });
-
-    [resetBtn, pauseBtn, resumeBtn, closeBtn].forEach((btn) => {
-      Object.assign(btn.style, {
-        border: "1px solid #444",
-        borderRadius: "8px",
-        background: "#f7f7f7",
-        padding: "4px 8px",
-        cursor: "pointer",
+      btn.addEventListener("click", () => {
+        if (activeTabBtn) activeTabBtn.classList.remove("adn-active");
+        if (activeTabContent) activeTabContent.classList.remove("adn-active");
+        btn.classList.add("adn-active");
+        content.classList.add("adn-active");
+        activeTabBtn = btn;
+        activeTabContent = content;
       });
+
+      tabsNav.appendChild(btn);
+      tabsContentContainer.appendChild(content);
     });
 
-    quick.append(resetBtn, pauseBtn, resumeBtn, closeBtn);
-    panel.append(titleEl, ...rows, pauseLabel, quick);
+    pauseLabel = createElement("div", "adn-pause-info", { textContent: "Auto Skip Active" });
+
+    const pauseBtn = createElement("button", "adn-btn", { textContent: "Pause" });
+    pauseBtn.addEventListener("click", () => pauseForMinutes(settings.pauseMinutes));
+
+    const resumeBtn = createElement("button", "adn-btn", { textContent: "Resume" });
+    resumeBtn.addEventListener("click", () => resumeNow());
+
+    const resetBtn = createElement("button", "adn-btn", { textContent: "Reset" });
+    resetBtn.addEventListener("click", () => {
+      if (confirm("Reset all settings to default?")) saveSettings(DEFAULTS);
+    });
+
+    const quickActionsRow1 = createElement("div", "adn-quick-actions", {}, [pauseBtn, resumeBtn]);
+    const quickActionsRow2 = createElement("div", "adn-quick-actions", {}, [resetBtn]);
+
+    const footerTop = createElement("div", "adn-footer-top", {}, [pauseLabel, quickActionsRow1]);
+    const footer = createElement("div", "adn-footer", {}, [footerTop, quickActionsRow2]);
+
+    panel.append(header, tabsNav, tabsContentContainer, footer);
 
     gear.addEventListener("click", () => {
-      panel.style.display = panel.style.display === "none" ? "block" : "none";
+      panel.classList.toggle("adn-panel-open");
     });
 
     document.body.append(gear, panel);
@@ -881,6 +984,7 @@
       if (!first) return false;
       suppressedCurrentButton = first.el;
       log("Suppressed once:", first.category, first.el);
+      updatePlayerNoSkipButtonText();
       return true;
     };
 

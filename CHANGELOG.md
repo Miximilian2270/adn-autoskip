@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.7.0
+- **UI & UX Overhaul:**
+  - Settings panel redesigned with a modern tabbed layout (General, Skipping, Hotkeys, System).
+  - Replaced standard checkboxes with sleek iOS-style toggle switches.
+  - Improved floating gear button with smoother animations and a cleaner design.
+  - Re-engineered dark/light mode themes with robust CSS variables.
+- **Internationalization (i18n):**
+  - Added dynamic bilingual support based on browser language (`navigator.language`).
+  - Button texts and UI elements default to English but switch to German for German-language browsers.
+- **Visual Feedback:**
+  - The in-player suppression button now visually turns green when the `ArrowDown` (suppress current skip) key is pressed to clearly confirm suppression.
+
+
 ## 1.6.0
 - Added daily GitHub update check (default: enabled).
 - Added `Daily update check` toggle in settings.

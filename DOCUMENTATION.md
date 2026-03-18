@@ -1,6 +1,6 @@
 # Documentation
 
-This document describes the behavior of `adn-auto-skip-with-settings.user.js` (version `1.3.0`).
+This document describes the behavior of `adn-auto-skip-with-settings.user.js`.
 
 ## Purpose
 The userscript auto-clicks known ADN skip controls:
@@ -19,11 +19,19 @@ It is intentionally ADN-specific and does not target Crunchyroll.
 
 ## UI Overview
 Bottom-right floating button:
-- `SKIP ON`: active
-- `SKIP OFF`: disabled
-- `SKIP PAUSED`: temporarily paused
+- `SKIP ON` / `SKIP AN`: active
+- `SKIP OFF` / `SKIP AUS`: disabled
+- `SKIP PAUSED` / `SKIP PAUSIERT`: temporarily paused
 
-Click the button to open the settings panel.
+Click the button to open the settings panel. The settings panel is now divided into four tabs for easier navigation:
+- **General**: Enable Auto Skip, Delay, Theme, Pause duration.
+- **Skipping**: Configuration for Intro, Recap, Credits, Next Episode, Context, and fallback Jump seconds.
+- **Hotkeys**: Custom bindings for all available actions.
+- **System**: Debug logs and Update tracking.
+
+## Internationalization (i18n)
+The UI elements (such as the floating button text and the in-player toggle) automatically detect the browser's language. The default language is **English**, but it gracefully switches to **German** if the browser's language is set to German (e.g., `de-DE`).
+
 
 ## Settings Reference
 - `Enable Auto Skip`
@@ -83,7 +91,7 @@ Hotkey fields support key capture:
 ## One-Time Suppression Behavior
 - When an auto-skip button is currently visible (`Intro` / `Recap` / `Ending` / `Next`):
   - Press `Suppress current skip once key` (default `ArrowDown`).
-  - The visible button is marked as suppressed.
+  - The visible in-player toggle button will turn green and display `Skip temporarily suppressed! [Playing Normally]` (or the German equivalent) to visually confirm the interaction.
   - Auto-click skips this one button instance.
   - Auto-skip continues normally for later/new buttons.
 
