@@ -17,6 +17,7 @@ The script includes a built-in settings panel with delay, theme switch (dark/lig
 - In-player temporary toggle button to pause/resume auto-skip for the current visible skip phase
 - Optional daily GitHub update check with red update indicator on the floating `SKIP` button
 - Footer update actions: `Check update now` and `Install update` (enabled when update is available)
+- After starting install, footer action switches to `Reload page now`
 - Toggle individual skip categories
 - Temporary pause with configurable duration
 - Hotkeys for enable/disable and pause/resume

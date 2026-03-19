@@ -73,6 +73,7 @@ The UI elements (such as the floating button text and the in-player toggle) auto
   - Manual footer actions:
     - `Check update now`
     - `Install update` (enabled only when an update is available)
+    - after install starts, button changes to `Reload page now`
   - Footer status text shows result and last check time.
 - `Toggle key`
   - Hotkey for global enable/disable (default: `F8`).

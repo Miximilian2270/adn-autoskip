@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.7.5
+// @version      1.7.6
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -28,7 +28,7 @@
 
   const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
     ? GM_info.script.version
-    : "1.7.5";
+    : "1.7.6";
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
   const UPDATE_SOURCE_URL = "https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js";
@@ -57,6 +57,7 @@
     updateLastRemoteVersion: "",
     updateLastResult: "idle",
     updateLastError: "",
+    updateInstallPending: false,
   };
 
   const ADN_SELECTORS = {
@@ -188,6 +189,7 @@
         updateAvailable: false,
         updateLastResult: "disabled",
         updateLastError: "",
+        updateInstallPending: false,
       });
       return;
     }
@@ -208,6 +210,7 @@
         updateLastRemoteVersion: remoteVersion,
         updateLastResult: hasUpdate ? "update" : "up_to_date",
         updateLastError: "",
+        updateInstallPending: hasUpdate ? settings.updateInstallPending : false,
       });
       log("Update check", { local: SCRIPT_VERSION, remote: remoteVersion, hasUpdate });
     } catch (err) {
@@ -925,10 +928,16 @@
       else line = isDe ? "Update-Check: bereit" : "Update check: ready";
 
       const err = settings.updateLastError ? ` | ${settings.updateLastError}` : "";
-      updateLabel.textContent = `${line} | ${isDe ? "letzte Prüfung" : "last check"}: ${last}${err}`;
+      const reloadHint = settings.updateInstallPending
+        ? (isDe ? " | Installation gestartet: bitte Seite neu laden" : " | Install started: please reload page")
+        : "";
+      updateLabel.textContent = `${line} | ${isDe ? "letzte Prüfung" : "last check"}: ${last}${err}${reloadHint}`;
     }
     if (updateActionBtn) {
-      if (!settings.updateCheckEnabled) {
+      if (settings.updateInstallPending) {
+        updateActionBtn.disabled = false;
+        updateActionBtn.textContent = isDe ? "Seite neu laden" : "Reload page now";
+      } else if (!settings.updateCheckEnabled) {
         updateActionBtn.disabled = true;
         updateActionBtn.textContent = isDe ? "Update aus" : "Update off";
       } else if ((settings.updateLastResult || "") === "checking") {
@@ -1073,6 +1082,11 @@
     updateActionBtn = createElement("button", "adn-btn", { textContent: "No update", disabled: true });
     updateActionBtn.addEventListener("click", () => {
       if (updateActionBtn.disabled) return;
+      if (settings.updateInstallPending) {
+        window.location.reload();
+        return;
+      }
+      saveSettings({ updateInstallPending: true });
       window.open(UPDATE_SOURCE_URL, "_blank", "noopener,noreferrer");
     });
 

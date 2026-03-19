@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.6
+- Added post-install reload flow for updates:
+  - after clicking `Install update`, footer action switches to `Reload page now`
+  - update status shows explicit reload hint until page reload
+- `Reload page now` immediately activates the newly installed script version.
+
 ## 1.7.5
 - Fixed stale update indicator after installing a new version.
 - On startup, update check is now forced when previous state was `update available`.

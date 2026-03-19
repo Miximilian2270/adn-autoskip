@@ -1,0 +1,54 @@
+name: Release on Tag
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract changelog section for this tag
+        id: changelog
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          OUT="release_notes.md"
+
+          awk -v v="$VERSION" '
+            BEGIN { in_section=0 }
+            /^## / {
+              if (in_section) exit
+              if ($0 ~ "^## " v "$") { in_section=1; next }
+            }
+            in_section { print }
+          ' CHANGELOG.md > "$OUT"
+
+          if [ ! -s "$OUT" ]; then
+            echo "- Automated release for ${TAG}" > "$OUT"
+          fi
+
+          {
+            echo "body_path=$OUT"
+            echo "release_name=$VERSION"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ steps.changelog.outputs.release_name }}
+          body_path: ${{ steps.changelog.outputs.body_path }}
+          generate_release_notes: true
+          make_latest: true
