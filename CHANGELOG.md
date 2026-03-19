@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.7
+- Fixed update-check edge cases and reduced unnecessary status writes.
+- Improved tag lookup breadth (`per_page=100`) to reduce missed update detections.
+- `Install update` now sets install-pending only when popup/tab opens successfully.
+- Added explicit popup-blocked error feedback in the panel status.
+
 ## 1.7.6
 - Added post-install reload flow for updates:
   - after clicking `Install update`, footer action switches to `Reload page now`

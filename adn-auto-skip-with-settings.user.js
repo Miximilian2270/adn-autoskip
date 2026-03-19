@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.7.6
+// @version      1.7.7
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -28,11 +28,11 @@
 
   const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
     ? GM_info.script.version
-    : "1.7.6";
+    : "1.7.7";
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
   const UPDATE_SOURCE_URL = "https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js";
-  const UPDATE_TAGS_URL = "https://api.github.com/repos/Miximilian2270/adn-autoskip/tags?per_page=5";
+  const UPDATE_TAGS_URL = "https://api.github.com/repos/Miximilian2270/adn-autoskip/tags?per_page=100";
   const DEFAULTS = {
     enabled: true,
     delayMs: 3500,
@@ -182,24 +182,23 @@
   }
 
   async function checkForUpdates(force = false) {
-    saveSettings({ updateLastResult: "checking", updateLastError: "" });
-
     if (!settings.updateCheckEnabled) {
-      saveSettings({
-        updateAvailable: false,
-        updateLastResult: "disabled",
-        updateLastError: "",
-        updateInstallPending: false,
-      });
+      if (settings.updateAvailable || settings.updateLastResult !== "disabled" || settings.updateLastError || settings.updateInstallPending) {
+        saveSettings({
+          updateAvailable: false,
+          updateLastResult: "disabled",
+          updateLastError: "",
+          updateInstallPending: false,
+        });
+      }
       return;
     }
 
     const now = Date.now();
     const last = Number(settings.updateLastCheckTs || 0);
-    if (!force && now - last < UPDATE_CHECK_INTERVAL_MS) {
-      saveSettings({ updateLastResult: "skipped" });
-      return;
-    }
+    if (!force && now - last < UPDATE_CHECK_INTERVAL_MS) return;
+
+    saveSettings({ updateLastResult: "checking", updateLastError: "" });
 
     try {
       const remoteVersion = await getRemoteVersion();
@@ -1086,8 +1085,15 @@
         window.location.reload();
         return;
       }
-      saveSettings({ updateInstallPending: true });
-      window.open(UPDATE_SOURCE_URL, "_blank", "noopener,noreferrer");
+      const popup = window.open(UPDATE_SOURCE_URL, "_blank", "noopener,noreferrer");
+      if (popup) {
+        saveSettings({ updateInstallPending: true, updateLastError: "" });
+      } else {
+        saveSettings({
+          updateLastResult: "error",
+          updateLastError: "Popup blocked. Please allow popups for this site.",
+        });
+      }
     });
 
     const quickActionsRow1 = createElement("div", "adn-quick-actions", {}, [pauseBtn, resumeBtn]);
