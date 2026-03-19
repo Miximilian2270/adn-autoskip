@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3
+- Added userscript metadata URLs for direct Raw-based updates:
+  - `@downloadURL`
+  - `@updateURL`
+- Added one-click Raw install link to README.
+
 ## 1.7.2
 - Added visible update-check feedback in panel footer:
   - running / up to date / update available / error / disabled / interval skipped

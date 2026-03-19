@@ -25,10 +25,15 @@ The script includes a built-in settings panel with delay, theme switch (dark/lig
 
 ## Installation
 1. Install [Tampermonkey](https://www.tampermonkey.net/).
-2. Open `adn-auto-skip-with-settings.user.js`.
-3. Copy the full script content.
-4. In Tampermonkey, create a new script and paste the content.
-5. Save and reload ADN.
+2. One-click install (Raw): [Install script](https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js)
+3. Confirm installation in Tampermonkey.
+4. Reload ADN.
+
+Alternative manual method:
+1. Open `adn-auto-skip-with-settings.user.js`.
+2. Copy the full script content.
+3. In Tampermonkey, create a new script and paste the content.
+4. Save and reload ADN.
 
 ## Usage
 1. Open an episode on ADN.
