@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.7.4
+// @version      1.7.5
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -28,7 +28,7 @@
 
   const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
     ? GM_info.script.version
-    : "1.7.4";
+    : "1.7.5";
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
   const UPDATE_SOURCE_URL = "https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js";
@@ -221,7 +221,9 @@
   }
 
   function startUpdateChecker() {
-    checkForUpdates(false);
+    const mustForceAtStartup =
+      !!settings.updateAvailable || settings.updateLastResult === "update";
+    checkForUpdates(mustForceAtStartup);
     if (updateCheckTimer) window.clearInterval(updateCheckTimer);
     updateCheckTimer = window.setInterval(() => {
       checkForUpdates(false);

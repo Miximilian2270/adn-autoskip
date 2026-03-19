@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.5
+- Fixed stale update indicator after installing a new version.
+- On startup, update check is now forced when previous state was `update available`.
+- This clears red `SKIP` state and `update available` status immediately after successful install.
+
 ## 1.7.4
 - Added footer `Install update` action button that is enabled only when an update is available.
 - Button opens the Raw install URL to start Tampermonkey update/install directly.
