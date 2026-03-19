@@ -70,7 +70,9 @@ The UI elements (such as the floating button text and the in-player toggle) auto
   - Checks GitHub tags and raw script version once per day.
   - If an update is found, the floating `SKIP` button turns red.
   - Can be disabled.
-  - A manual `Check update now` button is available in the footer.
+  - Manual footer actions:
+    - `Check update now`
+    - `Install update` (enabled only when an update is available)
   - Footer status text shows result and last check time.
 - `Toggle key`
   - Hotkey for global enable/disable (default: `F8`).

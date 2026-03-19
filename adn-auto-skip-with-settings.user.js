@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.7.3
+// @version      1.7.4
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -28,7 +28,7 @@
 
   const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
     ? GM_info.script.version
-    : "1.7.3";
+    : "1.7.4";
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
   const UPDATE_SOURCE_URL = "https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js";
@@ -711,6 +711,10 @@
       .adn-btn:hover {
         background: var(--adn-btn-hover);
       }
+      .adn-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
       .adn-close-btn {
         background: transparent;
         border: none;
@@ -875,6 +879,7 @@
 
   let panel = null;
   let gear = null;
+  let updateActionBtn = null;
 
   function refreshPanelValues() {
     if (!panel) return;
@@ -919,6 +924,21 @@
 
       const err = settings.updateLastError ? ` | ${settings.updateLastError}` : "";
       updateLabel.textContent = `${line} | ${isDe ? "letzte Prüfung" : "last check"}: ${last}${err}`;
+    }
+    if (updateActionBtn) {
+      if (!settings.updateCheckEnabled) {
+        updateActionBtn.disabled = true;
+        updateActionBtn.textContent = isDe ? "Update aus" : "Update off";
+      } else if ((settings.updateLastResult || "") === "checking") {
+        updateActionBtn.disabled = true;
+        updateActionBtn.textContent = isDe ? "Prufe..." : "Checking...";
+      } else if (settings.updateAvailable) {
+        updateActionBtn.disabled = false;
+        updateActionBtn.textContent = isDe ? "Update installieren" : "Install update";
+      } else {
+        updateActionBtn.disabled = true;
+        updateActionBtn.textContent = isDe ? "Kein Update" : "No update";
+      }
     }
     if (gear) {
       if (settings.updateCheckEnabled && settings.updateAvailable) {
@@ -1048,8 +1068,14 @@
       }
     });
 
+    updateActionBtn = createElement("button", "adn-btn", { textContent: "No update", disabled: true });
+    updateActionBtn.addEventListener("click", () => {
+      if (updateActionBtn.disabled) return;
+      window.open(UPDATE_SOURCE_URL, "_blank", "noopener,noreferrer");
+    });
+
     const quickActionsRow1 = createElement("div", "adn-quick-actions", {}, [pauseBtn, resumeBtn]);
-    const quickActionsRow2 = createElement("div", "adn-quick-actions", {}, [resetBtn, checkNowBtn]);
+    const quickActionsRow2 = createElement("div", "adn-quick-actions", {}, [resetBtn, checkNowBtn, updateActionBtn]);
 
     const statusWrap = createElement("div", "", {}, [pauseLabel, updateLabel]);
     const footerTop = createElement("div", "adn-footer-top", {}, [statusWrap, quickActionsRow1]);

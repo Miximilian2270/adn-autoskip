@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.4
+- Added footer `Install update` action button that is enabled only when an update is available.
+- Button opens the Raw install URL to start Tampermonkey update/install directly.
+- Added clearer disabled button states: `No update`, `Update off`, `Checking...`.
+
 ## 1.7.3
 - Added userscript metadata URLs for direct Raw-based updates:
   - `@downloadURL`
