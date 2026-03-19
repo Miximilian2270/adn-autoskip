@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.7.7
+// @version      1.7.8
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -28,7 +28,7 @@
 
   const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
     ? GM_info.script.version
-    : "1.7.7";
+    : "1.7.8";
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
   const UPDATE_SOURCE_URL = "https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js";
@@ -596,8 +596,8 @@
         bottom: 60px;
         width: 380px;
         max-width: 90vw;
-        max-height: 80vh;
-        overflow-y: auto;
+        height: min(560px, 80vh);
+        overflow: hidden;
         z-index: 2147483647;
         background: var(--adn-bg);
         color: var(--adn-text);
@@ -613,6 +613,8 @@
         transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         scrollbar-width: thin;
         scrollbar-color: var(--adn-border) transparent;
+        display: flex;
+        flex-direction: column;
       }
       #adn-auto-skip-panel.adn-panel-open {
         opacity: 1;
@@ -660,9 +662,18 @@
         background: var(--adn-accent);
         color: #fff;
       }
+      .adn-tabs-content {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--adn-border) transparent;
+        padding-right: 2px;
+      }
       .adn-tab-content {
         display: none;
         animation: adn-fade-in 0.2s ease;
+        min-height: 100%;
       }
       .adn-tab-content.adn-active {
         display: block;

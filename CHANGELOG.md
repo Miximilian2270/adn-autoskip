@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.8
+- Stabilized settings panel layout across tab switches.
+- Panel now keeps a consistent height and uses an internal scroll area for tab content.
+- Fixed visual size jumping when switching between tabs with different content lengths.
+
 ## 1.7.7
 - Fixed update-check edge cases and reduced unnecessary status writes.
 - Improved tag lookup breadth (`per_page=100`) to reduce missed update detections.
