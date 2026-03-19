@@ -67,9 +67,11 @@ The UI elements (such as the floating button text and the in-player toggle) auto
 - `Debug logs`
   - Enables console logs prefixed with `[ADN AutoSkip]`.
 - `Daily update check`
-  - Checks the GitHub script once per day for newer `@version`.
+  - Checks GitHub tags and raw script version once per day.
   - If an update is found, the floating `SKIP` button turns red.
   - Can be disabled.
+  - A manual `Check update now` button is available in the footer.
+  - Footer status text shows result and last check time.
 - `Toggle key`
   - Hotkey for global enable/disable (default: `F8`).
 - `Pause key`

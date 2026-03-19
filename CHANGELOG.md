@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.2
+- Added visible update-check feedback in panel footer:
+  - running / up to date / update available / error / disabled / interval skipped
+  - includes last check timestamp and optional remote version/error
+- Improved `Check update now` button with live checking state.
+
+## 1.7.1
+- Fixed update detection to support repository tags (e.g. `v1.7.0`) even when raw file version lags.
+- Switched network update checks to `GM_xmlhttpRequest` for better Tampermonkey/CSP compatibility.
+- Added manual `Check update now` button in the settings footer.
+
 ## 1.7.0
 - **UI & UX Overhaul:**
   - Settings panel redesigned with a modern tabbed layout (General, Skipping, Hotkeys, System).

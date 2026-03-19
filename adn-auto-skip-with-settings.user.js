@@ -1,14 +1,16 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.6.0
+// @version      1.7.2
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
 // @homepageURL  https://github.com/Miximilian2270/adn-autoskip
 // @supportURL   https://github.com/Miximilian2270/adn-autoskip/issues
 // @license      MIT
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @connect      raw.githubusercontent.com
+// @connect      api.github.com
 // @run-at       document-idle
 // ==/UserScript==
 
@@ -22,10 +24,13 @@
 (() => {
   "use strict";
 
-  const SCRIPT_VERSION = "1.6.0";
+  const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
+    ? GM_info.script.version
+    : "1.7.2";
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
   const UPDATE_SOURCE_URL = "https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js";
+  const UPDATE_TAGS_URL = "https://api.github.com/repos/Miximilian2270/adn-autoskip/tags?per_page=5";
   const DEFAULTS = {
     enabled: true,
     delayMs: 3500,
@@ -47,6 +52,9 @@
     updateCheckEnabled: true,
     updateLastCheckTs: 0,
     updateAvailable: false,
+    updateLastRemoteVersion: "",
+    updateLastResult: "idle",
+    updateLastError: "",
   };
 
   const ADN_SELECTORS = {
@@ -70,6 +78,7 @@
   let playerNoSkipButton = null;
   let playerNoSkipActive = false;
   let pauseLabel = null;
+  let updateLabel = null;
   let titleEl = null;
   let lastIntroStartTime = null;
   let updateCheckTimer = null;
@@ -116,28 +125,95 @@
     return 0;
   }
 
+  function extractVersionFromTagName(tagName) {
+    const m = String(tagName || "").match(/v?(\d+\.\d+\.\d+)/i);
+    return m ? m[1] : null;
+  }
+
+  function extractVersionFromScriptText(text) {
+    const m = String(text || "").match(/@version\s+([0-9.]+)/);
+    return m ? m[1] : null;
+  }
+
+  function httpGetText(url) {
+    if (typeof GM_xmlhttpRequest === "function") {
+      return new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+          method: "GET",
+          url,
+          nocache: true,
+          onload: (resp) => {
+            if (resp.status >= 200 && resp.status < 300) resolve(resp.responseText);
+            else reject(new Error(`HTTP ${resp.status} for ${url}`));
+          },
+          onerror: () => reject(new Error(`Network error for ${url}`)),
+          ontimeout: () => reject(new Error(`Timeout for ${url}`)),
+        });
+      });
+    }
+    return fetch(url, { cache: "no-store" }).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+      return res.text();
+    });
+  }
+
+  async function getRemoteVersion() {
+    try {
+      const tagsText = await httpGetText(UPDATE_TAGS_URL);
+      const tags = JSON.parse(tagsText);
+      if (Array.isArray(tags)) {
+        const versions = tags
+          .map((t) => extractVersionFromTagName(t?.name))
+          .filter(Boolean)
+          .sort((a, b) => compareSemver(b, a));
+        if (versions.length) return versions[0];
+      }
+    } catch (err) {
+      log("Tag version lookup failed, falling back to raw script", err);
+    }
+
+    const rawText = await httpGetText(UPDATE_SOURCE_URL);
+    const rawVersion = extractVersionFromScriptText(rawText);
+    if (!rawVersion) throw new Error("No @version found in remote script");
+    return rawVersion;
+  }
+
   async function checkForUpdates(force = false) {
+    saveSettings({ updateLastResult: "checking", updateLastError: "" });
+
     if (!settings.updateCheckEnabled) {
-      if (settings.updateAvailable) saveSettings({ updateAvailable: false });
+      saveSettings({
+        updateAvailable: false,
+        updateLastResult: "disabled",
+        updateLastError: "",
+      });
       return;
     }
 
     const now = Date.now();
     const last = Number(settings.updateLastCheckTs || 0);
-    if (!force && now - last < UPDATE_CHECK_INTERVAL_MS) return;
+    if (!force && now - last < UPDATE_CHECK_INTERVAL_MS) {
+      saveSettings({ updateLastResult: "skipped" });
+      return;
+    }
 
     try {
-      const res = await fetch(UPDATE_SOURCE_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Update check failed: ${res.status}`);
-      const text = await res.text();
-      const m = text.match(/@version\s+([0-9.]+)/);
-      if (!m) throw new Error("No @version found in remote script");
-      const remoteVersion = m[1];
+      const remoteVersion = await getRemoteVersion();
       const hasUpdate = compareSemver(remoteVersion, SCRIPT_VERSION) > 0;
-      saveSettings({ updateLastCheckTs: now, updateAvailable: hasUpdate });
+      saveSettings({
+        updateLastCheckTs: now,
+        updateAvailable: hasUpdate,
+        updateLastRemoteVersion: remoteVersion,
+        updateLastResult: hasUpdate ? "update" : "up_to_date",
+        updateLastError: "",
+      });
       log("Update check", { local: SCRIPT_VERSION, remote: remoteVersion, hasUpdate });
     } catch (err) {
-      saveSettings({ updateLastCheckTs: now });
+      saveSettings({
+        updateLastCheckTs: now,
+        updateLastResult: "error",
+        updateLastError: err?.message ? String(err.message) : "unknown error",
+      });
       log("Update check error", err);
     }
   }
@@ -808,6 +884,16 @@
       else el.value = String(settings[key]);
     });
     const isDe = navigator.language.startsWith("de");
+    const fmtTime = (ts) => {
+      const n = Number(ts || 0);
+      if (!n) return isDe ? "nie" : "never";
+      try {
+        return new Date(n).toLocaleString();
+      } catch {
+        return isDe ? "unbekannt" : "unknown";
+      }
+    };
+
     if (pauseLabel) {
       if (isTemporarilyPaused()) {
         const sec = Math.ceil(pauseRemainingMs() / 1000);
@@ -815,6 +901,22 @@
       } else {
         pauseLabel.textContent = isDe ? "Auto Skip Aktiv" : "Auto Skip Active";
       }
+    }
+    if (updateLabel) {
+      const last = fmtTime(settings.updateLastCheckTs);
+      const remote = settings.updateLastRemoteVersion ? ` (remote ${settings.updateLastRemoteVersion})` : "";
+      const result = settings.updateLastResult || "idle";
+      let line = "";
+      if (result === "checking") line = isDe ? "Update-Check: läuft..." : "Update check: running...";
+      else if (result === "up_to_date") line = isDe ? `Update-Check: aktuell${remote}` : `Update check: up to date${remote}`;
+      else if (result === "update") line = isDe ? `Update verfügbar${remote}` : `Update available${remote}`;
+      else if (result === "error") line = isDe ? "Update-Check: Fehler" : "Update check: error";
+      else if (result === "disabled") line = isDe ? "Update-Check: deaktiviert" : "Update check: disabled";
+      else if (result === "skipped") line = isDe ? "Update-Check: Intervall noch aktiv" : "Update check: interval not reached";
+      else line = isDe ? "Update-Check: bereit" : "Update check: ready";
+
+      const err = settings.updateLastError ? ` | ${settings.updateLastError}` : "";
+      updateLabel.textContent = `${line} | ${isDe ? "letzte Prüfung" : "last check"}: ${last}${err}`;
     }
     if (gear) {
       if (settings.updateCheckEnabled && settings.updateAvailable) {
@@ -917,6 +1019,7 @@
     });
 
     pauseLabel = createElement("div", "adn-pause-info", { textContent: "Auto Skip Active" });
+    updateLabel = createElement("div", "adn-pause-info", { textContent: "Update check: ready" });
 
     const pauseBtn = createElement("button", "adn-btn", { textContent: "Pause" });
     pauseBtn.addEventListener("click", () => pauseForMinutes(settings.pauseMinutes));
@@ -929,10 +1032,25 @@
       if (confirm("Reset all settings to default?")) saveSettings(DEFAULTS);
     });
 
-    const quickActionsRow1 = createElement("div", "adn-quick-actions", {}, [pauseBtn, resumeBtn]);
-    const quickActionsRow2 = createElement("div", "adn-quick-actions", {}, [resetBtn]);
+    const checkNowBtn = createElement("button", "adn-btn", { textContent: "Check update now" });
+    checkNowBtn.addEventListener("click", async () => {
+      if (checkNowBtn.disabled) return;
+      const old = checkNowBtn.textContent;
+      checkNowBtn.disabled = true;
+      checkNowBtn.textContent = "Checking...";
+      try {
+        await checkForUpdates(true);
+      } finally {
+        checkNowBtn.disabled = false;
+        checkNowBtn.textContent = old;
+      }
+    });
 
-    const footerTop = createElement("div", "adn-footer-top", {}, [pauseLabel, quickActionsRow1]);
+    const quickActionsRow1 = createElement("div", "adn-quick-actions", {}, [pauseBtn, resumeBtn]);
+    const quickActionsRow2 = createElement("div", "adn-quick-actions", {}, [resetBtn, checkNowBtn]);
+
+    const statusWrap = createElement("div", "", {}, [pauseLabel, updateLabel]);
+    const footerTop = createElement("div", "adn-footer-top", {}, [statusWrap, quickActionsRow1]);
     const footer = createElement("div", "adn-footer", {}, [footerTop, quickActionsRow2]);
 
     panel.append(header, tabsNav, tabsContentContainer, footer);

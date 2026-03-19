@@ -59,6 +59,7 @@ The script includes a built-in settings panel with delay, theme switch (dark/lig
 - `Require player context`
 - `Debug logs`
 - `Daily update check`
+  - Includes a manual `Check update now` action in the footer.
 - `Toggle key`
 - `Pause key`
 
