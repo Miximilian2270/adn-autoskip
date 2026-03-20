@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.7.8
+// @version      1.7.9
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -28,7 +28,7 @@
 
   const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
     ? GM_info.script.version
-    : "1.7.8";
+    : "1.7.9";
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
   const UPDATE_SOURCE_URL = "https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js";
@@ -77,6 +77,7 @@
   let settings = loadSettings();
   let skipLoopTimer = null;
   let clickCooldown = new WeakMap();
+  let pendingClicks = new WeakMap();
   let suppressedCurrentButton = null;
   let playerNoSkipButton = null;
   let playerNoSkipActive = false;
@@ -383,8 +384,10 @@
   }
 
   function clickAfterDelay(el, category) {
+    if (pendingClicks.has(el)) return;
     const delay = Math.max(0, Number(settings.delayMs) || 0);
-    window.setTimeout(() => {
+    const timerId = window.setTimeout(() => {
+      pendingClicks.delete(el);
       if (!settings.enabled || isTemporarilyPaused() || !isVisible(el)) return;
       if (suppressedCurrentButton === el) return;
       if (!canClickNow(el)) return;
@@ -396,6 +399,7 @@
       el.click();
       log("Clicked", category, el);
     }, delay);
+    pendingClicks.set(el, timerId);
   }
 
   function getVisibleAutoSkipCandidates() {
@@ -1167,8 +1171,19 @@
       return true;
     };
 
+    const shouldIgnoreHotkeys = (target) => {
+      if (!(target instanceof Element)) return false;
+      if (target.closest("#adn-auto-skip-panel, #adn-auto-skip-gear")) return true;
+      return (
+        (target instanceof HTMLInputElement) ||
+        (target instanceof HTMLTextAreaElement) ||
+        (target instanceof HTMLSelectElement) ||
+        target.isContentEditable
+      );
+    };
+
     document.addEventListener("keydown", (e) => {
-      if ((e.target instanceof HTMLInputElement) || (e.target instanceof HTMLTextAreaElement) || e.target?.isContentEditable) return;
+      if (shouldIgnoreHotkeys(e.target)) return;
 
       if (matchesCombo(e, settings.skipCurrentOnceKey)) {
         if (suppressCurrentVisibleSkipOnce()) {

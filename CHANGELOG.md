@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.9
+- Prevented duplicate delayed auto-click scheduling for the same visible skip button.
+- Added pending-click tracking cleanup when delayed click executes.
+- Improved hotkey guard to ignore keybind handling while interacting with the script UI (panel/gear).
+
 ## 1.7.8
 - Stabilized settings panel layout across tab switches.
 - Panel now keeps a consistent height and uses an internal scroll area for tab content.
