@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.7.9
+// @version      1.8.0
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -28,7 +28,7 @@
 
   const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
     ? GM_info.script.version
-    : "1.7.9";
+    : "1.8.0";
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
   const UPDATE_SOURCE_URL = "https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js";
@@ -86,6 +86,8 @@
   let titleEl = null;
   let lastIntroStartTime = null;
   let updateCheckTimer = null;
+  let updateInstallWindow = null;
+  let updateInstallWatchTimer = null;
 
   function log(...args) {
     if (settings.debug) console.log("[ADN AutoSkip]", ...args);
@@ -233,6 +235,7 @@
     }, 60 * 60 * 1000);
     window.addEventListener("beforeunload", () => {
       if (updateCheckTimer) window.clearInterval(updateCheckTimer);
+      if (updateInstallWatchTimer) window.clearInterval(updateInstallWatchTimer);
     }, { once: true });
   }
 
@@ -1103,6 +1106,16 @@
       const popup = window.open(UPDATE_SOURCE_URL, "_blank", "noopener,noreferrer");
       if (popup) {
         saveSettings({ updateInstallPending: true, updateLastError: "" });
+        updateInstallWindow = popup;
+        if (updateInstallWatchTimer) window.clearInterval(updateInstallWatchTimer);
+        updateInstallWatchTimer = window.setInterval(() => {
+          if (!updateInstallWindow) return;
+          if (updateInstallWindow.closed) {
+            window.clearInterval(updateInstallWatchTimer);
+            updateInstallWatchTimer = null;
+            window.location.reload();
+          }
+        }, 700);
       } else {
         saveSettings({
           updateLastResult: "error",

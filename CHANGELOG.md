@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.0
+- Added automatic reload after update-install flow:
+  - after `Install update`, the opened update tab is watched
+  - when that tab is closed, the original page reloads automatically
+- This reduces manual reload steps after successful Tampermonkey update install.
+
 ## 1.7.9
 - Prevented duplicate delayed auto-click scheduling for the same visible skip button.
 - Added pending-click tracking cleanup when delayed click executes.
