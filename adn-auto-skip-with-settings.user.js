@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      1.8.0
+// @version      1.8.1
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -28,7 +28,7 @@
 
   const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
     ? GM_info.script.version
-    : "1.8.0";
+    : "1.8.1";
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
   const UPDATE_SOURCE_URL = "https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js";
@@ -226,6 +226,11 @@
   }
 
   function startUpdateChecker() {
+    const reloadAfterInstallIfPending = () => {
+      if (!settings.updateInstallPending) return;
+      window.location.reload();
+    };
+
     const mustForceAtStartup =
       !!settings.updateAvailable || settings.updateLastResult === "update";
     checkForUpdates(mustForceAtStartup);
@@ -237,6 +242,10 @@
       if (updateCheckTimer) window.clearInterval(updateCheckTimer);
       if (updateInstallWatchTimer) window.clearInterval(updateInstallWatchTimer);
     }, { once: true });
+    window.addEventListener("focus", reloadAfterInstallIfPending);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") reloadAfterInstallIfPending();
+    });
   }
 
   function isTemporarilyPaused() {
@@ -1103,7 +1112,7 @@
         window.location.reload();
         return;
       }
-      const popup = window.open(UPDATE_SOURCE_URL, "_blank", "noopener,noreferrer");
+      const popup = window.open(UPDATE_SOURCE_URL, "_blank");
       if (popup) {
         saveSettings({ updateInstallPending: true, updateLastError: "" });
         updateInstallWindow = popup;

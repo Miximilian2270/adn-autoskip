@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.1
+- Improved post-install auto-reload reliability:
+  - added focus/visibility fallback reload when returning to the ADN tab with install pending
+  - removed `noopener/noreferrer` from update-tab open call to improve closed-window detection
+
 ## 1.8.0
 - Added automatic reload after update-install flow:
   - after `Install update`, the opened update tab is watched
