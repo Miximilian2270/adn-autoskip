@@ -1,95 +1,141 @@
 # ADN Auto Skip with Settings
 
-Tampermonkey userscript for [Animation Digital Network (ADN)](https://www.animationdigitalnetwork.com/) that automatically skips:
-- intro
-- recap
-- ending/credits
-- next episode
+![Version](https://img.shields.io/badge/version-1.9.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Platform](https://img.shields.io/badge/platform-ADN-orange)
 
-The script includes a built-in settings panel with delay, theme switch (dark/light), hotkeys, and temporary pause controls.
+A userscript that automatically skips intro, recap, credits, and next episode prompts on [Animation Digital Network (ADN)](https://animationdigitalnetwork.com) with a fully configurable settings panel.
 
-## Features
-- ADN-focused strict matching using known `data-testid` selectors
-- Adjustable skip delay (e.g. `3500 ms`)
-- **Modern Tabbed Settings UI** with sleek toggle switches, categories, and smooth CSS animations
-- **Bilingual Support (English/German)** automatically adjusting based on browser settings
-- Visual feedback directly on the player button when skipping is suppressed via hotkey
-- In-player temporary toggle button to pause/resume auto-skip for the current visible skip phase
-- Optional daily GitHub update check with red update indicator on the floating `SKIP` button
-- Footer update actions: `Check update now` and `Install update` (enabled when update is available)
-- After starting install, footer action switches to `Reload page now`
-- Toggle individual skip categories
-- Temporary pause with configurable duration
-- Hotkeys for enable/disable and pause/resume
-- Floating quick-access control (`SKIP ON/OFF/PAUSED`)
-- Dark/Light settings panel theme
-- Automatic local persistence via `localStorage`
+## ✨ Features
 
-## Installation
-1. Install [Tampermonkey](https://www.tampermonkey.net/).
-2. One-click install (Raw): [Install script](https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js)
-3. Confirm installation in Tampermonkey.
-4. Reload ADN.
+### Auto Skip
+- **Intro** — Automatically skips opening sequences
+- **Recap** — Skips episode recaps
+- **Credits/Ending** — Skips ending credits
+- **Next Episode** — Auto-advances to the next episode
+- **Configurable delay** — Set how long to wait before skipping (0–60000ms)
+- **Per-category toggle** — Enable/disable each skip type individually
+- **Suppress once** — Temporarily prevent skipping the current button
 
-Alternative manual method:
-1. Open `adn-auto-skip-with-settings.user.js`.
-2. Copy the full script content.
-3. In Tampermonkey, create a new script and paste the content.
-4. Save and reload ADN.
+### Settings Panel
+- **Tabbed interface** — General, Skipping, Hotkeys, System
+- **Dark/Light theme** — Choose your preferred UI style
+- **Pause timer** — Temporarily pause auto-skip for 1–180 minutes
+- **Click-outside-to-close** — Panel closes when clicking elsewhere
+- **Version badge** — Current version always visible
+- **Status indicator** — Color-coded dot on the gear button
 
-## Usage
-1. Open an episode on ADN.
-2. Click the floating button in the bottom-right corner (`SKIP ON`).
-3. Configure settings in the panel.
-4. For hotkeys, click the hotkey field and press the desired key combo.
+### Hotkeys
+All hotkeys are fully customizable via the settings panel:
 
-### Default Hotkeys
-- `F8`: toggle auto skip ON/OFF
-- `F9`: pause/resume temporary skip pause
-- `Control+ArrowRight`: skip intro (or jump forward)
-- `Control+ArrowLeft`: jump to intro start (or jump backward)
-- `ArrowDown`: suppress currently visible auto-skip action once
+| Default Key | Action |
+|---|---|
+| `F8` | Toggle auto-skip on/off |
+| `F9` | Pause/resume auto-skip |
+| `Ctrl+→` | Skip intro (or jump forward) |
+| `Ctrl+←` | Jump back to intro start |
+| `↓` | Suppress current skip button once |
 
-## Settings
-- `Enable Auto Skip`
-- `Delay (ms)`
-- `Panel Theme` (`Dark` / `Light`)
-- `Skip intro hotkey`
-- `Jump to intro start hotkey`
-- `Jump seconds (+/-)`
-- `Suppress current skip once key`
-- `Pause duration (min)`
-- `Skip Intro`
-- `Skip Recap`
-- `Skip Credits/Ending`
-- `Skip Next Episode`
-- `Require player context`
-- `Debug logs`
-- `Daily update check`
-  - Includes a manual `Check update now` action in the footer.
-- `Toggle key`
-- `Pause key`
+### Update System
+- **Daily automatic update check** via GitHub Releases API
+- **Floating update banner** with changelog display
+- **"Remind me later"** — Snooze notifications for 4 hours
+- **"Ignore this version"** — Permanently dismiss a specific version
+- **Release page link** — View full release details on GitHub
+- **Progress indicator** — Visual feedback during update checks
+- **Version comparison** — Color-coded in System tab (green = current, red = update available)
 
-## Technical Notes
-- Storage key: `ADN_AUTO_SKIP_SETTINGS_V1`
-- Supported ADN controls are identified via:
-  - `skip-intro-button`
-  - `skip-recap-button`
-  - `skip-ending-button`
-  - `next-video-button`
+## 📦 Installation
 
-## Documentation
-- Full docs: [`DOCUMENTATION.md`](./DOCUMENTATION.md)
-- Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
+### Prerequisites
+You need a userscript manager:
+- [Tampermonkey](https://www.tampermonkey.net/) (recommended)
+- [Violentmonkey](https://violentmonkey.github.io/)
+- [Greasemonkey](https://www.greasespot.net/)
 
-## Inspiration and References
-- Crunchyroll Auto Skip with Settings:
-  [Greasy Fork script](https://greasyfork.org/de/scripts/513644-crunchyroll-auto-skip-with-settings)
-- MALSync:
-  [GitHub repository](https://github.com/MALSync/MALSync)
+### Install
+Click the link below — your userscript manager will handle the rest:
 
-## Build Note
-This script was created with assistance from GPT-5.3-Codex.
+**[⬇️ Install ADN Auto Skip](https://raw.githubusercontent.com/Miximilian2270/adn-autoskip/main/adn-auto-skip-with-settings.user.js)**
+
+### Update
+Updates are checked automatically once per day. When an update is available:
+1. A floating banner appears with the changelog
+2. Click **"Install now"** to update via your userscript manager
+3. Or click **"Remind me later"** / **"Ignore this version"**
+
+You can also manually check for updates in the **System** tab.
+
+## 🖥️ Usage
+
+1. Go to [animationdigitalnetwork.com](https://animationdigitalnetwork.com)
+2. A **gear button** appears in the bottom-right corner:
+   - 🟢 Green dot = Auto-skip active
+   - 🟡 Yellow dot = Temporarily paused
+   - 🔴 Red dot = Disabled
+   - 🔴 Pulsing = Update available
+3. Click the gear to open the **settings panel**
+4. Configure your preferences across the four tabs
+
+### Panel Tabs
+
+#### General
+| Setting | Description | Default |
+|---|---|---|
+| Enable Auto Skip | Master on/off switch | ✅ On |
+| Delay (ms) | Wait time before clicking skip | 3500 |
+| Theme | Dark or Light mode | Dark |
+| Pause duration | How long the pause timer runs | 5 min |
+
+#### Skipping
+| Setting | Description | Default |
+|---|---|---|
+| Skip Intro | Auto-skip intro sequences | ✅ On |
+| Skip Recap | Auto-skip recaps | ✅ On |
+| Skip Credits/Ending | Auto-skip endings | ✅ On |
+| Skip Next Episode | Auto-advance episodes | ✅ On |
+| Require player context | Only detect buttons inside player | ❌ Off |
+| Jump seconds | Seconds to jump with hotkey | 85 |
+
+#### Hotkeys
+Click any hotkey field, then press your desired key combination. Press `Escape` to cancel.
+
+#### System
+- Toggle debug logging
+- Enable/disable automatic update checks
+- View update status, installed version, and latest version
+- Manually trigger update check
+
+## 🛡️ Permissions
+
+| Permission | Reason |
+|---|---|
+| `GM_xmlhttpRequest` | Fetch update info from GitHub API |
+| `@connect raw.githubusercontent.com` | Download script updates |
+| `@connect api.github.com` | Check releases and tags |
+
+## 🔧 Technical Details
+
+- **Detection**: Uses `data-testid` attributes on ADN's skip buttons for reliable classification
+- **Observation**: MutationObserver on `document.documentElement` + 900ms polling fallback
+- **Storage**: All settings persisted in `localStorage` under `ADN_AUTO_SKIP_SETTINGS_V1`
+- **Cooldown**: 3-second click cooldown per button to prevent double-clicks
+- **Cleanup**: All observers and timers are properly disconnected on `beforeunload`
+
+## 📝 License
+
+[MIT](LICENSE) — feel free to use, modify, and distribute.
+
+## 🙏 Credits
+
+- Inspired by [Crunchyroll Auto Skip with Settings](https://greasyfork.org/de/scripts/513644-crunchyroll-auto-skip-with-settings)
+- Inspired by [MALSync](https://github.com/MALSync/MALSync)
+- Built with assistance from GPT-5.3-Codex
+
+## 🐛 Issues
+
+Found a bug or have a feature request?
+→ [Open an issue](https://github.com/Miximilian2270/adn-autoskip/issues)
 
 ## Disclaimer
 This project is unofficial and not affiliated with ADN.
