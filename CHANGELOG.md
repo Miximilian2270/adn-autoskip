@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.9.0] - 2025-01-24
+
+### Added
+- Floating update banner with changelog display from GitHub Releases
+- "Remind me later" option (4 hour snooze) for update notifications
+- "Ignore this version" option to permanently dismiss a specific update
+- Status indicator dot on gear button (green = active, yellow = paused, red = off)
+- Pulsing red dot animation when update is available
+- Version badge (`v1.9.0`) in settings panel header
+- Structured update info section in System tab with clear status rows
+- Indeterminate progress bar during update checks
+- Click-outside-to-close for settings panel
+- GitHub Releases API integration for fetching changelogs
+- Release page link in update banner and System tab
+- `t()` and `isDe()` helper functions for cleaner localization
+
+### Changed
+- Redesigned entire update system from scratch
+- Replaced `updateInstallPending` logic with cleaner snooze/ignore system
+- Update banner now shows all newer releases combined
+- System tab now shows version comparison with color coding (green = current, red = update available)
+- Gear button now shows status dot instead of changing background color
+- Simplified HTTP error handling with proper timeout support
+- Improved panel footer layout with grouped quick actions
+
+### Fixed
+- Template literal syntax errors (`new Error\`...\`` → `new Error(...)`)
+- Missing error handling for release API calls
+- Hotkey inputs now properly ignore clicks on update banner
+
+### Removed
+- `updateInstallPending` setting (replaced by snooze/ignore system)
+- Popup-based install flow (replaced by direct userscript manager install)
+- `updateLastResult: "skipped"` state (no longer needed)
+
 ## 1.8.1
 - Improved post-install auto-reload reliability:
   - added focus/visibility fallback reload when returning to the ADN tab with install pending
