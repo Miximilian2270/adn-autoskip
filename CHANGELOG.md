@@ -1,5 +1,87 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.0.1] - 2025-01-24
+
+### Fixed
+- **Toast click-through** — Toasts no longer block clicks on player controls (`pointer-events: none` on individual toasts)
+- **Cheatsheet event leak** — Close handler is now properly stored and removed on every hide, preventing stacked listeners on repeated open/close
+- **F1 browser conflict** — Default cheatsheet key changed from `F1` to `Shift+?` to avoid opening browser help; existing `F1` bindings are auto-migrated
+- **Export mutation bug** — `exportS()` now clones settings before removing transient keys, preventing live settings object from being modified
+- **Banner memory leak** — `innerHTML = ""` replaced with `while(firstChild) removeChild` in `refreshBanner()` and `refreshUpdInfo()` to prevent orphaned event listeners
+- **Panel overflow on small screens** — `max-height` changed to `min(580px, calc(100vh - 90px))` with `flex-shrink: 0` on header and footer
+- **Update lock not released on crash** — `unlockUpd()` now also called in `beforeunload` handler to prevent stale locks after browser crash or tab close
+- **Duplicate i18n key** — Removed duplicate `"general.toasts"` entry in German translation
+- **Backdrop-filter fallback** — Added `@supports not (backdrop-filter)` rule that increases background opacity to `.98` for browsers without blur support
+- **Refresh timer leak** — `refreshTimer` is now tracked and cleared on `beforeunload` to prevent orphaned intervals during SPA navigation
+- **Import type safety** — Import now validates each key's type against `DEFAULTS` and skips mismatched values with a debug warning
+
+### Changed
+- `fmtCombo()` and `fmtHint()` now share a single label map instead of duplicating arrow/modifier logic
+- Cheatsheet overlay sets `csOverlay = null` immediately on hide to prevent double-close race condition
+- Settings version bumped to 5
+- Cheatsheet close handler stored as module-level `csCloseHandler` ref for reliable cleanup
+
+## [2.0.0] - 2025-01-24
+
+### Added
+- **Glassmorphism UI** — Frosted glass effect with `backdrop-filter: blur(16px) saturate(1.4)`
+- **Card-based layout** — Settings grouped into visual cards with clear hierarchy
+- **Pill-style tabs** with emoji icons (⚙ ⏭ ⌨ 🔧)
+- **Micro-animations** on every interaction (panel open, tab switch, toast, cheatsheet)
+- **Accessibility** — `role="switch"` on toggles, `aria-label` on buttons, `focus-visible` outlines
+- **Toast notifications** — Slide-in feedback for all actions (skip, toggle, pause, jump)
+- **Hotkey cheatsheet overlay** — Fullscreen shortcut reference with blur backdrop
+- **French localization** — Full FR translation (ADN is a French platform)
+- **Import/Export settings** — Save and restore configuration as JSON
+- **Configurable cheatsheet key** — Customize the help overlay hotkey
+- **Show notifications toggle** — Disable toast popups if unwanted
+
+### Changed
+- Complete UI/UX overhaul with modern design language
+- Gear button redesigned as pill shape with hover lift and active press effects
+- Toggles enlarged to 40×22px with smoother knob animation
+- Color palette improved for better contrast in both themes
+- All CSS class names shortened (`adn-*` → `as-*`) for smaller footprint
+- Settings version bumped to 4
+
+### Fixed
+- All v1.9.1 fixes included (migration, fullscreen, multi-tab lock, z-index)
+- Consistent border-radius using CSS custom properties
+- Theme switching applies instantly without flicker
+
+### Removed
+- Legacy `adn-*` CSS class naming (replaced with `as-*`)
+
+## [1.9.1] - 2025-01-24
+
+### Added
+- Settings migration system with `KNOWN_KEYS` whitelist and `_settingsVersion` tracking
+- Automatic cleanup of deprecated keys (`updateInstallPending`, `updateInstallWindow`) on load
+- Fullscreen detection with `fullscreenchange` and `webkitfullscreenchange` listeners
+- Gear button auto-hides in fullscreen mode
+- Panel auto-closes when entering fullscreen
+- Update banner hides during fullscreen playback
+- Multi-tab update lock via `localStorage` with 30s TTL
+- New update status `skipped_lock` shown when another tab is already checking
+- `releaseUpdateLock()` in `finally` block to prevent stale locks
+
+### Fixed
+- Banner and panel no longer overlap (z-index: banner 2147483645, gear 2147483646, panel 2147483647)
+- Settings panel now properly closes when entering fullscreen
+- Update check no longer runs simultaneously in multiple tabs
+- Deprecated settings keys from v1.8.x are automatically removed on upgrade
+- Force update checks (manual "Check now") bypass the multi-tab lock
+
+### Changed
+- `loadSettings()` now runs `migrateSettings()` on every load
+- Update banner checks `isFullscreen` before showing
+- Progress bar is now recreated inside `refreshUpdateInfo()` for consistency
+
 ## [1.9.0] - 2025-01-24
 
 ### Added
