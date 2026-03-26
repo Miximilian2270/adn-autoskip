@@ -35,7 +35,7 @@
 The script runs as a single IIFE (Immediately Invoked Function Expression) in strict mode.
 All state is contained within the closure — nothing leaks to the global scope.
 
-\`\`\`
+```text
 ┌─────────────────────────────────────────────────┐
 │                    Boot                          │
 │  buildPanel() → startObs() → setupKeys()        │
@@ -61,20 +61,20 @@ All state is contained within the closure — nothing leaks to the global scope.
 │   Migration       │
 │   Import/Export   │
 └───────────────────┘
-\`\`\`
+```
 
 ### Core Loops
 
 | Loop | Interval | Purpose |
 |---|---|---|
 | MutationObserver | Real-time | Detect new skip buttons in DOM |
-| scan() | 900ms | Polling fallback for missed mutations |
-| refreshUI() | 1000ms | Update panel values, gear status, pause countdown |
-| checkUpd() | 1 hour | Periodic update check (actual check gated to 24h) |
+| `scan()` | 900ms | Polling fallback for missed mutations |
+| `refreshUI()` | 1000ms | Update panel values, gear status, pause countdown |
+| `checkUpd()` | 1 hour | Periodic update check (actual check gated to 24h) |
 
 ### Lifecycle
 
-\`\`\`
+```text
 document-idle
   → DOMContentLoaded (or immediate if ready)
     → boot()
@@ -91,13 +91,13 @@ beforeunload
   → clearInterval(updTimer)
   → clearInterval(refreshTimer)
   → unlockUpd()           // Release multi-tab lock
-\`\`\`
+```
 
 ---
 
 ## 2. File Structure
 
-\`\`\`
+```text
 adn-autoskip/
 ├── adn-auto-skip-with-settings.user.js   # Main script (single file)
 ├── README.md                               # User-facing documentation
@@ -105,7 +105,7 @@ adn-autoskip/
 ├── DOCUMENTATION.md                        # This file
 ├── LICENSE                                 # MIT license
 └── .gitignore
-\`\`\`
+```
 
 The entire extension is a **single JavaScript file** with embedded CSS.
 No build step, no dependencies, no external assets.
@@ -116,11 +116,11 @@ No build step, no dependencies, no external assets.
 
 ### Storage
 
-All settings are stored in localStorage under key ADN_AUTO_SKIP_SETTINGS_V1 as a JSON string.
+All settings are stored in `localStorage` under key `ADN_AUTO_SKIP_SETTINGS_V1` as a JSON string.
 
 ### Schema
 
-\`\`\`javascript
+```javascript
 const DEFAULTS = {
   // Core
   enabled: true,              // Master toggle
@@ -167,18 +167,18 @@ const DEFAULTS = {
   // Internal
   _settingsVersion: 5,        // Bumped on schema changes
 };
-\`\`\`
+```
 
 ### Migration
 
-On every loadSettings() call, the stored JSON is run through migrate():
+On every `loadSettings()` call, the stored JSON is run through `migrate()`:
 
 1. Parse JSON from localStorage
-2. Filter keys through KNOWN_KEYS whitelist
+2. Filter keys through `KNOWN_KEYS` whitelist
 3. Remove any unknown/deprecated keys
 4. Merge with DEFAULTS (new keys get default values)
 5. Special migrations (e.g., F1 → Shift+? for cheatsheetKey)
-6. Set _settingsVersion to current
+6. Set `_settingsVersion` to current
 7. Save back to localStorage
 
 **Version history:**
@@ -187,13 +187,13 @@ On every loadSettings() call, the stored JSON is run through migrate():
 |---|---|
 | 1 | Initial schema (v1.8.1) |
 | 2 | Added migration system (v1.9.1) |
-| 3 | Added showToasts, cheatsheetKey (v1.10.0) |
+| 3 | Added `showToasts`, `cheatsheetKey` (v1.10.0) |
 | 4 | CSS class rename, new UI (v2.0.0) |
 | 5 | F1 → Shift+? migration, type validation (v2.0.1) |
 
 ### Save Flow
 
-\`\`\`javascript
+```javascript
 function save(next) {
   S = { ...S, ...next };
   if (next.updateCheckEnabled === false) {
@@ -201,10 +201,10 @@ function save(next) {
     S.updateChangelog = "";
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
-  refreshUI();
-  refreshBanner();
+  refreshUI();      // Update panel inputs
+  refreshBanner();  // Update/hide update banner
 }
-\`\`\`
+```
 
 ---
 
@@ -212,7 +212,7 @@ function save(next) {
 
 ### ADN Button Selectors
 
-\`\`\`javascript
+```javascript
 const ADN_SEL = {
   skipArea: ".vjs-time-code-skip-buttons",
   skipBtns: [
@@ -226,11 +226,11 @@ const ADN_SEL = {
     'button[data-testid="next-video-button"]',
   ].join(","),
 };
-\`\`\`
+```
 
 ### Detection Pipeline
 
-\`\`\`
+```text
 1. querySelectorAll(ADN_SEL.skipBtns)
 2. Filter: isVis(el)             → visibility, display, opacity, bounding rect
 3. Filter: inPlayer(el)          → optional player context check
@@ -238,11 +238,11 @@ const ADN_SEL = {
 5. Filter: elText(el).length     → reject suspiciously long text (>100 chars)
 6. Classify: classify(el)        → data-testid → "intro"|"recap"|"credits"|"next"
 7. Filter: catOn(category)       → user has this category enabled?
-\`\`\`
+```
 
 ### Click Flow
 
-\`\`\`
+```text
 Button detected
   → canClick(el)?          // 3s cooldown per element (WeakMap)
   → suppressedBtn === el?  // User suppressed this one?
@@ -253,11 +253,11 @@ Button detected
       → markClick(el)      // Set cooldown
       → el.click()         // Trigger the skip
       → toast(...)         // Show notification
-\`\`\`
+```
 
 ### Cooldown System
 
-\`\`\`javascript
+```javascript
 let clickCD = new WeakMap();  // el → timestamp
 
 function canClick(el) {
@@ -266,19 +266,20 @@ function canClick(el) {
 function markClick(el) {
   clickCD.set(el, Date.now());
 }
-\`\`\`
+```
 
-Using WeakMap ensures garbage collection when buttons are removed from DOM.
+Using `WeakMap` ensures garbage collection when buttons are removed from DOM.
 
 ### Pending Click Tracking
 
-\`\`\`javascript
+```javascript
 let pendingCD = new WeakMap();  // el → timer ID
 
+// Prevents scheduling duplicate clicks for the same button
 if (pendingCD.has(el)) return;
-const tid = setTimeout(() => { ... }, delay);
+const tid = setTimeout(() => { /* ... */ }, delay);
 pendingCD.set(el, tid);
-\`\`\`
+```
 
 ---
 
@@ -286,35 +287,35 @@ pendingCD.set(el, tid);
 
 ### Structure
 
-\`\`\`javascript
+```javascript
 const LANG = {
   en: { "key": "English text {var}" },
   de: { "key": "Deutscher Text {var}" },
   fr: { "key": "Texte français {var}" },
 };
-\`\`\`
+```
 
 ### Usage
 
-\`\`\`javascript
+```javascript
 t("toast.paused", { min: 5 })
 // → "⏸ Paused 5m"        (English)
 // → "⏸ Pausiert 5m"      (German)
 // → "⏸ En pause 5m"      (French)
-\`\`\`
+```
 
 ### Language Detection
 
-\`\`\`javascript
+```javascript
 function getLang() {
   const l = navigator.language.slice(0, 2).toLowerCase();
-  return LANG[l] ? l : "en";
+  return LANG[l] ? l : "en";  // Fallback to English
 }
-\`\`\`
+```
 
 ### Key Naming Convention
 
-\`\`\`
+```text
 category.action
 ├── gear.on / gear.off / gear.paused
 ├── tab.general / tab.skip / tab.keys / tab.system
@@ -328,14 +329,14 @@ category.action
 ├── cs.title / cs.hint / ...
 ├── update.title / update.install_now / ...
 └── player.suppressed / player.reenable / ...
-\`\`\`
+```
 
 ### Adding a New Language
 
-1. Add a new key to the LANG object (e.g., es for Spanish)
-2. Copy all keys from en
+1. Add a new key to the `LANG` object (e.g., `es` for Spanish)
+2. Copy all keys from `en`
 3. Translate each value
-4. The script automatically detects navigator.language
+4. The script automatically detects `navigator.language`
 
 ---
 
@@ -343,7 +344,7 @@ category.action
 
 ### Component Hierarchy
 
-\`\`\`
+```text
 document.body
 ├── #as-gear                // Floating gear button
 │   ├── .as-dot             // Status indicator
@@ -364,19 +365,19 @@ document.body
 │   └── .as-toast           // Individual toasts
 └── .as-cs-overlay          // Cheatsheet (when open)
     └── .as-cs-box          // Cheatsheet content
-\`\`\`
+```
 
 ### Z-Index Stack
 
-\`\`\`
-2147483647  — Panel, Toasts, Cheatsheet (topmost)
-2147483646  — Gear button
-2147483645  — Update banner
-\`\`\`
+| Layer | Z-Index | Elements |
+|---|---|---|
+| Topmost | 2147483647 | Panel, Toasts, Cheatsheet |
+| Middle | 2147483646 | Gear button |
+| Bottom | 2147483645 | Update banner |
 
 ### Panel Open/Close
 
-\`\`\`javascript
+```javascript
 // Open/close toggle
 gear.addEventListener("click", () => panel.classList.toggle("as-open"));
 
@@ -389,18 +390,18 @@ document.addEventListener("click", e => {
 
 // Close on fullscreen
 if (isFS) panel.classList.remove("as-open");
-\`\`\`
+```
 
 ### Input Types
 
 | Factory | Output | Data Binding |
 |---|---|---|
-| mkToggle(key) | input.as-toggle checkbox | change → save() |
-| mkNum(key, min, max) | input.as-input number | input/change/blur → save() |
-| mkSel(key, opts) | select.as-input | change → save() |
-| mkHotkey(key) | input.as-input text readonly | focus → capture, keydown → save() |
+| `mkToggle(key)` | Checkbox toggle | `change → save()` |
+| `mkNum(key, min, max)` | Number input | `input/change/blur → save()` |
+| `mkSel(key, opts)` | Select dropdown | `change → save()` |
+| `mkHotkey(key)` | Readonly text input | `focus → capture, keydown → save()` |
 
-All inputs use data-sk attribute for automatic refresh in refreshUI().
+All inputs use `data-sk` attribute for automatic refresh in `refreshUI()`.
 
 ---
 
@@ -410,31 +411,31 @@ All inputs use data-sk attribute for automatic refresh in refreshUI().
 
 - **Position:** Fixed, bottom center, above gear button
 - **Animation:** Slide up + scale in → auto-dismiss after 2.2s → slide up + scale out
-- **Non-blocking:** pointer-events: none on both container and individual toasts
-- **Stacking:** flex-direction: column-reverse (newest at bottom)
+- **Non-blocking:** `pointer-events: none` on both container and individual toasts
+- **Stacking:** `flex-direction: column-reverse` (newest at bottom)
 
 ### Trigger Points
 
 | Action | Toast Key |
 |---|---|
-| Skip intro | toast.intro |
-| Skip recap | toast.recap |
-| Skip credits | toast.credits |
-| Skip next | toast.next |
-| Toggle on | toast.enabled |
-| Toggle off | toast.disabled |
-| Pause | toast.paused |
-| Resume | toast.resumed |
-| Suppress once | toast.suppressed |
-| Jump forward | toast.jump_fwd |
-| Jump back | toast.jump_back |
-| Export | sys.export |
-| Import success | import.success |
-| Import error | import.error |
+| Skip intro | `toast.intro` |
+| Skip recap | `toast.recap` |
+| Skip credits | `toast.credits` |
+| Skip next | `toast.next` |
+| Toggle on | `toast.enabled` |
+| Toggle off | `toast.disabled` |
+| Pause | `toast.paused` |
+| Resume | `toast.resumed` |
+| Suppress once | `toast.suppressed` |
+| Jump forward | `toast.jump_fwd` |
+| Jump back | `toast.jump_back` |
+| Export | `sys.export` |
+| Import success | `import.success` |
+| Import error | `import.error` |
 
 ### Lifecycle
 
-\`\`\`
+```text
 toast(key, vars, ms)
   → Check S.showToasts
   → ensureToastBox()
@@ -444,7 +445,7 @@ toast(key, vars, ms)
     → replace .as-toast-in with .as-toast-out
     → transitionend → remove element
     → setTimeout(400ms) → fallback remove
-\`\`\`
+```
 
 ---
 
@@ -452,29 +453,29 @@ toast(key, vars, ms)
 
 ### Combo Format
 
-Internal format: Modifier+Modifier+Key (normalized to lowercase)
+Internal format: `Modifier+Modifier+Key` (normalized to lowercase)
 
-\`\`\`
+```text
 "Control+ArrowRight"  → Ctrl + →
 "Shift+?"             → Shift + ?
 "F8"                  → F8
 "ArrowDown"           → ↓
-\`\`\`
+```
 
 ### Processing Pipeline
 
-\`\`\`
+```text
 KeyboardEvent
   → shouldIgnore(target)?      // Skip if inside input, panel, etc.
   → evCombo(event)             // Build "modifier+key" string
   → normCombo(combo)           // Normalize to lowercase
   → matchCombo(event, setting) // Compare with stored hotkey
   → Execute action
-\`\`\`
+```
 
 ### Hotkey Recording
 
-\`\`\`
+```text
 1. User clicks hotkey input → focus
 2. input.dataset.cap = "1"
 3. input.value = "Press keys…"
@@ -482,18 +483,18 @@ KeyboardEvent
 5. evCombo(event) → format → save
 6. Exit capture mode
 7. Escape → cancel without saving
-\`\`\`
+```
 
 ### Ignored Contexts
 
 Hotkeys are suppressed when focus is on:
 
-- #as-panel (settings panel)
-- #as-gear (gear button)
-- #as-banner (update banner)
-- .as-cs-overlay (cheatsheet)
-- input, textarea, select elements
-- contenteditable elements
+- `#as-panel` (settings panel)
+- `#as-gear` (gear button)
+- `#as-banner` (update banner)
+- `.as-cs-overlay` (cheatsheet)
+- `<input>`, `<textarea>`, `<select>`
+- `[contenteditable]`
 
 ---
 
@@ -501,18 +502,19 @@ Hotkeys are suppressed when focus is on:
 
 ### Behavior
 
-1. Shift+? (configurable) opens fullscreen overlay
+1. `Shift+?` (configurable) opens fullscreen overlay
 2. Shows all current hotkey bindings with formatted key badges
-3. Backdrop: semi-transparent black with blur(6px)
-4. Closes on any keypress or any click
-5. Toggle: pressing Shift+? again also closes it
+3. Backdrop: semi-transparent black with `blur(6px)`
+4. Closes on **any** keypress or **any** click
+5. Toggle: pressing `Shift+?` again also closes it
 
 ### Event Cleanup (v2.0.1 Fix)
 
-\`\`\`javascript
+```javascript
 let csCloseHandler = null;
 
 function showCS() {
+  // ... create overlay ...
   csCloseHandler = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -521,22 +523,25 @@ function showCS() {
   setTimeout(() => {
     document.addEventListener("keydown", csCloseHandler, true);
     document.addEventListener("click", csCloseHandler, true);
-  }, 120);
+  }, 120);  // Delay to avoid immediate close
 }
 
 function hideCS() {
+  // Always remove listeners first
   if (csCloseHandler) {
     document.removeEventListener("keydown", csCloseHandler, true);
     document.removeEventListener("click", csCloseHandler, true);
     csCloseHandler = null;
   }
+  // Set ref to null immediately (prevent double-close)
   const ref = csOverlay;
   csOverlay = null;
+  // Animate out + remove
   ref.classList.remove("as-cs-show");
   ref.addEventListener("transitionend", () => ref.remove(), { once: true });
-  setTimeout(() => ref.remove(), 400);
+  setTimeout(() => ref.remove(), 400);  // Fallback
 }
-\`\`\`
+```
 
 ---
 
@@ -544,7 +549,7 @@ function hideCS() {
 
 ### Check Flow
 
-\`\`\`
+```text
 checkUpd(force?)
   │
   ├── Not enabled? → save "disabled", return
@@ -569,42 +574,42 @@ checkUpd(force?)
   ├── Check if version is ignored
   ├── Save results
   └── Release lock (finally block)
-\`\`\`
+```
 
 ### API Endpoints
 
 | URL | Purpose |
 |---|---|
-| api.github.com/repos/.../releases | Version + changelog + release URL |
-| api.github.com/repos/.../tags | Version fallback (no changelog) |
-| raw.githubusercontent.com/.../main/... | Raw script fallback |
+| `api.github.com/repos/.../releases` | Version + changelog + release URL |
+| `api.github.com/repos/.../tags` | Version fallback (no changelog) |
+| `raw.githubusercontent.com/.../main/...` | Raw script fallback |
 
 ### Update States
 
-\`\`\`
-"idle"         → Never checked
-"checking"     → Check in progress
-"up_to_date"   → Latest version installed
-"update"       → Newer version available
-"error"        → Check failed
-"disabled"     → Update check turned off
-"skipped_lock" → Another tab is checking
-\`\`\`
+| State | Meaning |
+|---|---|
+| `idle` | Never checked |
+| `checking` | Check in progress |
+| `up_to_date` | Latest version installed |
+| `update` | Newer version available |
+| `error` | Check failed |
+| `disabled` | Update check turned off |
+| `skipped_lock` | Another tab is checking |
 
 ### Banner Display Logic
 
-\`\`\`javascript
+```javascript
 const shouldShow =
-  S.updateCheckEnabled &&
-  S.updateAvailable &&
-  !isSnoozed() &&
-  !isFS &&
-  S.updateIgnoredVersion !== S.updateLastRemoteVersion;
-\`\`\`
+  S.updateCheckEnabled &&      // Feature enabled
+  S.updateAvailable &&         // Update exists
+  !isSnoozed() &&              // Not snoozed (4h)
+  !isFS &&                     // Not in fullscreen
+  S.updateIgnoredVersion !== S.updateLastRemoteVersion;  // Not ignored
+```
 
 ### Semver Comparison
 
-\`\`\`javascript
+```javascript
 function cmpVer(a, b) {
   const A = String(a).split(".").map(Number);
   const B = String(b).split(".").map(Number);
@@ -614,7 +619,7 @@ function cmpVer(a, b) {
   }
   return 0;
 }
-\`\`\`
+```
 
 ---
 
@@ -622,9 +627,12 @@ function cmpVer(a, b) {
 
 ### Export
 
-\`\`\`javascript
+```javascript
 function exportS() {
-  const exported = { ...S };  // Clone!
+  // Clone settings (don't modify live object!)
+  const exported = { ...S };
+
+  // Remove transient keys
   const TRANSIENT = [
     "pausedUntilTs", "updateLastCheckTs", "updateLastResult",
     "updateLastError", "updateAvailable", "updateChangelog",
@@ -640,30 +648,28 @@ function exportS() {
   };
   // ... trigger download ...
 }
-\`\`\`
+```
 
 ### Import Validation (v2.0.1)
 
-\`\`\`javascript
-function importS() {
-  // 1. Read file
-  // 2. Parse JSON
-  // 3. Validate structure:
-  //    - Must be an object
-  //    - Must have .settings object
-  //    - Optionally check ._export marker
-  // 4. Type-check each key against DEFAULTS:
-  //    - Only import keys in KNOWN_KEYS
-  //    - Only import values matching typeof DEFAULTS[key]
-  //    - Skip mismatched types with debug warning
-  // 5. Run through migrate()
-  // 6. save()
-}
-\`\`\`
+```text
+1. Read file
+2. Parse JSON
+3. Validate structure:
+   - Must be an object
+   - Must have .settings object
+   - Optionally check ._export marker
+4. Type-check each key against DEFAULTS:
+   - Only import keys in KNOWN_KEYS
+   - Only import values matching typeof DEFAULTS[key]
+   - Skip mismatched types with debug warning
+5. Run through migrate()
+6. save()
+```
 
 ### Export File Format
 
-\`\`\`json
+```json
 {
   "_export": "ADN Auto Skip Settings",
   "_version": "2.0.1",
@@ -675,7 +681,7 @@ function importS() {
     "skipIntro": true
   }
 }
-\`\`\`
+```
 
 ---
 
@@ -683,43 +689,42 @@ function importS() {
 
 ### Problem
 
-Multiple ADN tabs could trigger simultaneous update checks, wasting API calls and potentially causing race conditions.
+Multiple ADN tabs could trigger simultaneous update checks, wasting API calls
+and potentially causing race conditions.
 
 ### Solution: localStorage Lock
 
-\`\`\`javascript
+```javascript
 const UPDATE_LOCK_KEY = "ADN_AUTO_SKIP_UPDATE_LOCK";
-const UPDATE_LOCK_TTL_MS = 30 * 1000;
+const UPDATE_LOCK_TTL_MS = 30 * 1000;  // 30 second TTL
 
 function lockUpd() {
   const now = Date.now();
   try {
     const l = JSON.parse(localStorage.getItem(UPDATE_LOCK_KEY) || "{}");
-    if (l.ts && now - l.ts < UPDATE_LOCK_TTL_MS) return false;
+    if (l.ts && now - l.ts < UPDATE_LOCK_TTL_MS) return false;  // Lock held
   } catch {}
   localStorage.setItem(UPDATE_LOCK_KEY, JSON.stringify({ ts: now }));
-  return true;
+  return true;  // Lock acquired
 }
 
 function unlockUpd() {
   try { localStorage.removeItem(UPDATE_LOCK_KEY); } catch {}
 }
-\`\`\`
+```
 
 ### Lock Lifecycle
 
-\`\`\`
+```text
 Tab opens → checkUpd()
   → lockUpd() succeeds → proceed with check → unlockUpd() in finally
   → lockUpd() fails → save "skipped_lock" → return
 
 Tab closes → beforeunload → unlockUpd()
 Browser crash → Lock expires after 30s TTL
-\`\`\`
+```
 
-### Force Checks
-
-Manual "Check now" button bypasses the lock (force = true).
+Manual "Check now" button bypasses the lock (`force = true`).
 
 ---
 
@@ -727,28 +732,26 @@ Manual "Check now" button bypasses the lock (force = true).
 
 ### Detection
 
-\`\`\`javascript
+```javascript
 function setupFS() {
   const update = () => {
     isFS = !!document.fullscreenElement;
     updateVis();
   };
   document.addEventListener("fullscreenchange", update);
-  document.addEventListener("webkitfullscreenchange", update);
+  document.addEventListener("webkitfullscreenchange", update);  // Safari
 }
-\`\`\`
+```
 
 ### UI Behavior in Fullscreen
 
 | Element | Fullscreen Behavior |
 |---|---|
-| Gear button | Hidden (opacity: 0, pointer-events: none) |
+| Gear button | Hidden (`opacity: 0`, `pointer-events: none`) |
 | Settings panel | Force closed |
-| Update banner | Hidden (display: none) |
-| Toast container | Hidden (display: none) |
+| Update banner | Hidden (`display: none`) |
+| Toast container | Hidden (`display: none`) |
 | Player skip button | Unaffected (inside player) |
-
-### Restore on Exit
 
 All elements return to normal state when exiting fullscreen.
 
@@ -758,32 +761,32 @@ All elements return to normal state when exiting fullscreen.
 
 ### Design System
 
-\`\`\`css
+```css
 :root {
-  --as-bg: rgba(16,20,32,.92);
-  --as-bg-solid: #101420;
-  --as-text: #e8edf8;
-  --as-text2: #8a9cc0;
-  --as-border: rgba(60,80,120,.45);
-  --as-input: rgba(8,12,24,.7);
+  --as-bg: rgba(16,20,32,.92);       /* Panel background */
+  --as-bg-solid: #101420;             /* Toast background */
+  --as-text: #e8edf8;                 /* Primary text */
+  --as-text2: #8a9cc0;                /* Secondary text */
+  --as-border: rgba(60,80,120,.45);   /* Borders */
+  --as-input: rgba(8,12,24,.7);       /* Input backgrounds */
   --as-input-border: rgba(70,90,130,.5);
-  --as-btn: rgba(30,42,68,.8);
-  --as-btn-h: rgba(40,56,90,.9);
-  --as-accent: #5b8cff;
-  --as-accent2: #3d6ee0;
-  --as-green: #3ddc84;
-  --as-red: #ff5a6e;
-  --as-yellow: #ffb74d;
+  --as-btn: rgba(30,42,68,.8);        /* Button background */
+  --as-btn-h: rgba(40,56,90,.9);      /* Button hover */
+  --as-accent: #5b8cff;               /* Primary accent */
+  --as-accent2: #3d6ee0;              /* Accent hover */
+  --as-green: #3ddc84;                /* Active status */
+  --as-red: #ff5a6e;                  /* Error / off */
+  --as-yellow: #ffb74d;               /* Warning / paused */
   --as-shadow: 0 12px 40px rgba(0,0,0,.55);
   --as-glass: blur(16px) saturate(1.4);
-  --as-r: 14px;
-  --as-rs: 8px;
+  --as-r: 14px;                       /* Border radius */
+  --as-rs: 8px;                       /* Small radius */
 }
-\`\`\`
+```
 
 ### Light Theme Override
 
-\`\`\`css
+```css
 [data-as-theme="light"] {
   --as-bg: rgba(250,250,255,.94);
   --as-bg-solid: #fafaff;
@@ -794,40 +797,35 @@ All elements return to normal state when exiting fullscreen.
   --as-accent: #3b6cf5;
   --as-shadow: 0 8px 32px rgba(0,0,0,.12);
 }
-\`\`\`
+```
 
 ### Backdrop-Filter Fallback (v2.0.1)
 
-\`\`\`css
+```css
 @supports not (backdrop-filter: blur(1px)) {
   :root {
-    --as-bg: rgba(16,20,32,.98);
-    --as-glass: none;
+    --as-bg: rgba(16,20,32,.98);  /* More opaque */
+    --as-glass: none;              /* Disable blur */
   }
 }
-\`\`\`
+```
 
 ### CSS Class Naming
 
-All classes use the as- prefix (short for "auto-skip"):
+All classes use the `as-` prefix (short for "auto-skip"):
 
-\`\`\`
-as-dot          → Status dot
-as-toggle       → Toggle switch
-as-input        → Text/number input
-as-btn          → Button base
-as-btn-accent   → Primary action button
-as-btn-ghost    → Subtle button
-as-btn-link     → Link-style button
-as-card         → Settings card
-as-row          → Settings row
-as-tab          → Tab button
-as-pane         → Tab content
-as-toast        → Toast notification
-as-cs-*         → Cheatsheet elements
-as-banner-*     → Update banner elements
-as-upd-*        → Update info elements
-\`\`\`
+| Prefix | Elements |
+|---|---|
+| `as-dot` | Status dot |
+| `as-toggle` | Toggle switch |
+| `as-input` | Text/number input |
+| `as-btn` / `as-btn-accent` / `as-btn-ghost` / `as-btn-link` | Buttons |
+| `as-card` / `as-row` | Settings layout |
+| `as-tab` / `as-pane` | Tab navigation |
+| `as-toast` | Toast notification |
+| `as-cs-*` | Cheatsheet elements |
+| `as-banner-*` | Update banner elements |
+| `as-upd-*` | Update info elements |
 
 ### Animation Summary
 
@@ -851,14 +849,14 @@ as-upd-*        → Update info elements
 
 | Feature | Used For | Fallback |
 |---|---|---|
-| localStorage | Settings storage | None (required) |
-| MutationObserver | DOM change detection | Polling only |
-| WeakMap | Click cooldown tracking | None (required) |
-| backdrop-filter | Glass effect | Solid background (v2.0.1) |
+| `localStorage` | Settings storage | None (required) |
+| `MutationObserver` | DOM change detection | Polling only |
+| `WeakMap` | Click cooldown tracking | None (required) |
+| `backdrop-filter` | Glass effect | Solid background (v2.0.1) |
 | CSS custom properties | Theme system | None (required) |
-| template literals | String building | None (required) |
-| async/await | Update checks | None (required) |
-| GM_xmlhttpRequest | Cross-origin requests | Native fetch |
+| Template literals | String building | None (required) |
+| `async/await` | Update checks | None (required) |
+| `GM_xmlhttpRequest` | Cross-origin requests | Native `fetch` |
 | Fullscreen API | Fullscreen detection | UI stays visible |
 
 ### Minimum Browser Versions
@@ -868,7 +866,7 @@ as-upd-*        → Update info elements
 | Chrome | 76+ | Full support |
 | Firefox | 70+ | Full support |
 | Edge | 79+ | Full support (Chromium) |
-| Safari | 15+ | Needs -webkit-backdrop-filter |
+| Safari | 15+ | Needs `-webkit-backdrop-filter` |
 | Opera | 63+ | Full support |
 
 ### Userscript Manager Compatibility
@@ -877,7 +875,7 @@ as-upd-*        → Update info elements
 |---|---|---|
 | Tampermonkey | ✅ Full | Recommended |
 | Violentmonkey | ✅ Full | Works well |
-| Greasemonkey | ⚠️ Partial | GM_xmlhttpRequest may differ |
+| Greasemonkey | ⚠️ Partial | `GM_xmlhttpRequest` may differ |
 
 ---
 
@@ -887,9 +885,9 @@ as-upd-*        → Update info elements
 
 | Permission | Scope | Reason |
 |---|---|---|
-| GM_xmlhttpRequest | Script-level | Bypass CORS for GitHub API |
-| @connect raw.githubusercontent.com | Domain whitelist | Download updates |
-| @connect api.github.com | Domain whitelist | Check releases/tags |
+| `GM_xmlhttpRequest` | Script-level | Bypass CORS for GitHub API |
+| `@connect raw.githubusercontent.com` | Domain whitelist | Download updates |
+| `@connect api.github.com` | Domain whitelist | Check releases/tags |
 
 ### Data Handling
 
@@ -901,12 +899,12 @@ as-upd-*        → Update info elements
 
 ### Token Safety
 
-The script uses no authentication tokens. All GitHub API calls are unauthenticated
+The script uses **no authentication tokens**. All GitHub API calls are unauthenticated
 (rate limited to 60 requests/hour per IP).
 
 ### DOM Interaction
 
-- Only clicks buttons matching specific data-testid selectors
+- Only clicks buttons matching specific `data-testid` selectors
 - Never injects content into the video player
 - Never modifies ADN's own scripts or network requests
 
@@ -919,26 +917,26 @@ The script uses no authentication tokens. All GitHub API calls are unauthenticat
 1. Open settings panel → System tab → Enable "Debug logs"
 2. Or in browser console:
 
-\`\`\`javascript
+```javascript
 const s = JSON.parse(localStorage.getItem("ADN_AUTO_SKIP_SETTINGS_V1"));
 s.debug = true;
 localStorage.setItem("ADN_AUTO_SKIP_SETTINGS_V1", JSON.stringify(s));
 location.reload();
-\`\`\`
+```
 
 ### Console Output
 
-All debug messages are prefixed with [ADN-AS]:
+All debug messages are prefixed with `[ADN-AS]`:
 
-\`\`\`
+```text
 [ADN-AS] v2.0.1 {enabled: true, delayMs: 3500, ...}
 [ADN-AS] Click intro <a data-testid="skip-intro-button">
 [ADN-AS] Saved {skipIntro: false}
-\`\`\`
+```
 
 ### Quick Health Check
 
-\`\`\`javascript
+```javascript
 // Script loaded?
 document.getElementById("as-gear") ? "✅ Active" : "❌ Not loaded"
 
@@ -952,15 +950,15 @@ JSON.parse(localStorage.getItem("ADN_AUTO_SKIP_SETTINGS_V1"))
 const s = JSON.parse(localStorage.getItem("ADN_AUTO_SKIP_SETTINGS_V1"));
 s.updateLastCheckTs = 0;
 localStorage.setItem("ADN_AUTO_SKIP_SETTINGS_V1", JSON.stringify(s));
-\`\`\`
+```
 
 ### Reset Everything
 
-\`\`\`javascript
+```javascript
 localStorage.removeItem("ADN_AUTO_SKIP_SETTINGS_V1");
 localStorage.removeItem("ADN_AUTO_SKIP_UPDATE_LOCK");
 location.reload();
-\`\`\`
+```
 
 ---
 
@@ -970,12 +968,12 @@ location.reload();
 
 | Issue | Description | Workaround |
 |---|---|---|
-| iframes | Skip buttons inside iframes not detected | ADN doesn't currently use iframes for player |
-| SPA navigation | Interval timers may stack on soft nav | Timers cleaned on beforeunload |
-| API rate limit | GitHub allows 60 unauth requests/hour | Checks gated to once per 24h |
-| Popup blocker | "Install now" may be blocked | Allow popups for ADN domain |
-| Very fast skips | Buttons appearing for <100ms may be missed | Reduce delayMs to 0 |
-| Multiple videos | May pick wrong video element | findVid() prefers the playing video |
+| iframes | Skip buttons inside iframes not detected | ADN doesn't currently use iframes |
+| SPA navigation | Interval timers may stack on soft nav | Cleaned on `beforeunload` |
+| API rate limit | GitHub allows 60 unauth requests/hour | Gated to once per 24h |
+| Popup blocker | "Install now" may be blocked | Allow popups for ADN |
+| Very fast skips | Buttons appearing for <100ms may be missed | Reduce `delayMs` to 0 |
+| Multiple videos | May pick wrong video element | `findVid()` prefers playing video |
 
 ### By Design
 
@@ -983,7 +981,7 @@ location.reload();
 |---|---|
 | No auto-update install | Userscript managers must handle installation for security |
 | No cloud sync | Privacy — settings stay in localStorage |
-| No per-anime settings | Complexity vs. utility tradeoff (planned for v3.0) |
+| No per-anime settings | Complexity tradeoff (planned for v3.0) |
 | English-only debug logs | Developer audience; keeps code simple |
 
 ---
@@ -992,66 +990,66 @@ location.reload();
 
 ### Getting Started
 
-\`\`\`bash
+```bash
 git clone https://github.com/Miximilian2270/adn-autoskip.git
 cd adn-autoskip
-\`\`\`
+```
 
 ### Making Changes
 
-1. Edit adn-auto-skip-with-settings.user.js
-2. Update @version in the script header
+1. Edit `adn-auto-skip-with-settings.user.js`
+2. Update `@version` in the script header
 3. Test on ADN (install via Tampermonkey → "Create a new script")
 4. Update CHANGELOG.md
 5. Commit with conventional commit format:
 
-\`\`\`
+```text
 feat: description     (new feature → minor version bump)
 fix: description      (bug fix → patch version bump)
 feat!: description    (breaking change → major version bump)
 docs: description     (documentation only)
-\`\`\`
+```
 
 ### Release Process
 
-\`\`\`bash
+```bash
 git add -A
 git commit -m "feat: v1.x.x description"
 git push origin main
 git tag -a v1.x.x -m "Description"
 git push origin v1.x.x
-\`\`\`
+```
+
+Then create a GitHub Release with changelog.
 
 ### Code Style
 
-- IIFE wrapper — All code inside (() => { "use strict"; ... })()
-- No global leaks — Everything stays in closure
-- Short variable names — S for settings, el() for createElement
-- Functional helpers — Small pure functions over classes
-- CSS-in-JS — All styles in injectCSS() as template literal
+- **IIFE wrapper** — All code inside `(() => { "use strict"; ... })()`
+- **No global leaks** — Everything stays in closure
+- **Short variable names** — `S` for settings, `el()` for createElement
+- **Functional helpers** — Small pure functions over classes
+- **CSS-in-JS** — All styles in `injectCSS()` as template literal
 
 ### Testing Checklist
 
-\`\`\`
-[ ] Gear button appears
-[ ] Panel opens/closes
-[ ] All four tabs render
-[ ] Toggles save immediately
-[ ] Hotkey recording works
-[ ] Escape cancels hotkey capture
-[ ] F8 toggles auto-skip
-[ ] F9 pauses/resumes
-[ ] Shift+? opens cheatsheet
-[ ] Cheatsheet closes on any key/click
-[ ] Toast appears on skip
-[ ] Toast doesn't block player controls
-[ ] Fullscreen hides UI
-[ ] Fullscreen exit restores UI
-[ ] Light theme works
-[ ] Dark theme works
-[ ] Update check completes
-[ ] Import/Export roundtrip works
-[ ] Reset restores defaults
-[ ] Multi-tab lock prevents duplicate checks
-[ ] Settings migration removes old keys
-\`\`\`
+- [ ] Gear button appears
+- [ ] Panel opens/closes
+- [ ] All four tabs render
+- [ ] Toggles save immediately
+- [ ] Hotkey recording works
+- [ ] Escape cancels hotkey capture
+- [ ] F8 toggles auto-skip
+- [ ] F9 pauses/resumes
+- [ ] Shift+? opens cheatsheet
+- [ ] Cheatsheet closes on any key/click
+- [ ] Toast appears on skip
+- [ ] Toast doesn't block player controls
+- [ ] Fullscreen hides UI
+- [ ] Fullscreen exit restores UI
+- [ ] Light theme works
+- [ ] Dark theme works
+- [ ] Update check completes
+- [ ] Import/Export roundtrip works
+- [ ] Reset restores defaults
+- [ ] Multi-tab lock prevents duplicate checks
+- [ ] Settings migration removes old keys
