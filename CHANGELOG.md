@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-04-17
+
+### Fixed
+- **Settings panel layout** — Restored dynamic panel height and moved tabs to the bottom to prevent UI jumping when switching between tabs of different lengths.
+
 ## [2.0.1] - 2025-01-24
 
 ### Fixed

@@ -1,6 +1,6 @@
 # ADN Auto Skip with Settings
 
-![Version](https://img.shields.io/badge/version-2.0.1-blue)
+![Version](https://img.shields.io/badge/version-2.0.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-ADN-orange)
 ![Languages](https://img.shields.io/badge/languages-EN%20|%20DE%20|%20FR-yellow)
@@ -164,6 +164,7 @@ Press `Escape` to cancel.
 
 | Version | Date | Highlights |
 |---|---|---|
+| **2.0.2** | 2026-04-17 | UI fix: Restored dynamic panel height and moved tabs to the bottom to prevent layout jumping. |
 | **2.0.1** | 2025-01-24 | 11 bugfixes: toast click-through, cheatsheet leak, F1 conflict, export mutation, banner memory leak, responsive panel, lock cleanup, i18n fix, backdrop fallback, timer cleanup, import validation |
 | **2.0.0** | 2025-01-24 | Glassmorphism UI, FR localization, toasts, cheatsheet, import/export |
 | 1.9.1 | 2025-01-24 | Settings migration, fullscreen awareness, multi-tab lock |

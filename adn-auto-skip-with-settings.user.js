@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      2.0.1
+// @version      2.0.2
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -21,7 +21,7 @@
 
   const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
   ? GM_info.script.version
-  : "2.0.1";
+  : "2.0.2";
 
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_LOCK_KEY = "ADN_AUTO_SKIP_UPDATE_LOCK";
@@ -1094,7 +1094,7 @@
     rstB.addEventListener("click", () => { if (confirm(t("reset.confirm"))) save(DEFAULTS); });
     const footer = el("div", "as-footer", {}, [pauseLabel, el("div", "as-footer-acts", {}, [pauseB, resB, rstB])]);
 
-    panel.append(hdr, tabsBar, tabsBody, footer);
+    panel.append(hdr, tabsBody, tabsBar, footer);
     gear.addEventListener("click", () => panel.classList.toggle("as-open"));
     document.addEventListener("click", e => {
       if (!panel.classList.contains("as-open")) return;
