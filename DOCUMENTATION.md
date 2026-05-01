@@ -1,6 +1,6 @@
 # ADN Auto Skip — Technical Documentation
 
-> **Version:** 2.0.2
+> **Version:** 2.0.3
 > **Last updated:** 2026-05-01
 > **Author:** Miximilian2270
 
@@ -672,7 +672,7 @@ function exportS() {
 ```json
 {
   "_export": "ADN Auto Skip Settings",
-  "_version": "2.0.2",
+  "_version": "2.0.1",
   "_at": "2025-01-24T12:00:00.000Z",
   "settings": {
     "enabled": true,
@@ -929,7 +929,7 @@ location.reload();
 All debug messages are prefixed with `[ADN-AS]`:
 
 ```text
-[ADN-AS] v2.0.2 {enabled: true, delayMs: 3500, ...}
+[ADN-AS] v2.0.1 {enabled: true, delayMs: 3500, ...}
 [ADN-AS] Click intro <a data-testid="skip-intro-button">
 [ADN-AS] Saved {skipIntro: false}
 ```
