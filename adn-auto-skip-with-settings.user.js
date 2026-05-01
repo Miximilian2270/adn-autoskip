@@ -228,6 +228,7 @@
   let isFS = false, toastBox = null, csOverlay = null, csCloseHandler = null; // FIX #2
   let panel = null, gear = null, gearDot = null, gearTxt = null, sysTabBadge = null;
   let refreshTimer = null; // FIX #13
+  let panelCloseHandler = null; // FIX: outside-click listener reference
 
   function log(...a) { if (S.debug) console.log("[ADN‑AS]", ...a); }
 
@@ -399,7 +400,8 @@
 
   /* ─── Semver / HTTP ────────────────────────────────────── */
   function cmpVer(a, b) {
-    const A = String(a).split(".").map(Number), B = String(b).split(".").map(Number);
+    const toNums = (s) => String(s).split(".").map(p => parseInt(p, 10) || 0);
+    const A = toNums(a), B = toNums(b);
     for (let i = 0; i < Math.max(A.length, B.length); i++) {
       if ((A[i]||0) > (B[i]||0)) return 1;
       if ((A[i]||0) < (B[i]||0)) return -1;
@@ -1096,11 +1098,13 @@
 
     panel.append(hdr, tabsBody, tabsBar, footer);
     gear.addEventListener("click", () => panel.classList.toggle("as-open"));
-    document.addEventListener("click", e => {
+    if (panelCloseHandler) document.removeEventListener("click", panelCloseHandler);
+    panelCloseHandler = e => {
       if (!panel.classList.contains("as-open")) return;
       if (panel.contains(e.target) || gear.contains(e.target)) return;
       panel.classList.remove("as-open");
-    });
+    };
+    document.addEventListener("click", panelCloseHandler);
     document.body.append(gear, panel);
     createBanner();
 
@@ -1113,6 +1117,19 @@
   }
 
   /* ─── Hotkeys ──────────────────────────────────────────── */
+  function handleKeydown(e, { skipBtn, jump, jumpBack, suppress, shouldIgnore }) {
+    if (shouldIgnore(e.target)) return;
+    if (matchCombo(e, S.cheatsheetKey)) { e.preventDefault(); showCS(); return; }
+    if (matchCombo(e, S.skipCurrentOnceKey)) { if (suppress()) { e.preventDefault(); e.stopPropagation(); } }
+    if (matchCombo(e, S.toggleKey)) { e.preventDefault(); save({ enabled: !S.enabled }); toast(S.enabled ? "toast.enabled" : "toast.disabled"); }
+    if (matchCombo(e, S.pauseKey)) { e.preventDefault(); if (isPaused()) doResume(); else doPause(S.pauseMinutes); }
+    if (matchCombo(e, S.introSkipKey)) {
+      e.preventDefault();
+      if (!skipBtn()) { const s = Math.abs(Number(S.jumpSeconds) || 85); if (jump(s)) toast("toast.jump_fwd", { sec: s }); }
+    }
+    if (matchCombo(e, S.introBackKey)) { e.preventDefault(); jumpBack(); }
+  }
+
   function setupKeys() {
     const skipBtn = () => {
       const b = document.querySelector('a[data-testid="skip-intro-button"],button[data-testid="skip-intro-button"]');
@@ -1147,18 +1164,7 @@
       || tgt instanceof HTMLSelectElement || tgt.isContentEditable;
     };
 
-    document.addEventListener("keydown", e => {
-      if (shouldIgnore(e.target)) return;
-      if (matchCombo(e, S.cheatsheetKey)) { e.preventDefault(); showCS(); return; }
-      if (matchCombo(e, S.skipCurrentOnceKey)) { if (suppress()) { e.preventDefault(); e.stopPropagation(); } }
-      if (matchCombo(e, S.toggleKey)) { e.preventDefault(); save({ enabled: !S.enabled }); toast(S.enabled ? "toast.enabled" : "toast.disabled"); }
-      if (matchCombo(e, S.pauseKey)) { e.preventDefault(); if (isPaused()) doResume(); else doPause(S.pauseMinutes); }
-      if (matchCombo(e, S.introSkipKey)) {
-        e.preventDefault();
-        if (!skipBtn()) { const s = Math.abs(Number(S.jumpSeconds) || 85); if (jump(s)) toast("toast.jump_fwd", { sec: s }); }
-      }
-      if (matchCombo(e, S.introBackKey)) { e.preventDefault(); jumpBack(); }
-    }, true);
+    document.addEventListener("keydown", e => handleKeydown(e, { skipBtn, jump, jumpBack, suppress, shouldIgnore }), true);
   }
 
   /* ─── Boot ─────────────────────────────────────────────── */

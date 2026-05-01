@@ -10,3 +10,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Local config
+opencode.json

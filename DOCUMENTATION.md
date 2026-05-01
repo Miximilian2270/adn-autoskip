@@ -1,7 +1,7 @@
 # ADN Auto Skip — Technical Documentation
 
 > **Version:** 2.0.2
-> **Last updated:** 2025-01-24
+> **Last updated:** 2026-05-01
 > **Author:** Miximilian2270
 
 ---
