@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      2.0.3
+// @version      2.0.4
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -21,7 +21,7 @@
 
   const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
   ? GM_info.script.version
-  : "2.0.3";
+  : "2.0.4";
 
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_LOCK_KEY = "ADN_AUTO_SKIP_UPDATE_LOCK";
@@ -54,7 +54,7 @@
  "sys.debug":"Debug logs","sys.update_check":"Auto update check",
  "sys.export":"Export","sys.import":"Import","sys.reset":"Reset all",
  "sys.check_now":"Check now","sys.checking":"Checking…",
- "sys.install":"Install","sys.release":"Release ↗",
+ "sys.install":"Install","sys.release":"Release ↗","sys.reload":"Reload page",
  "sys.installed":"Installed","sys.latest":"Latest","sys.status":"Status",
  "sys.checked":"Checked","sys.error":"Error","sys.never":"never",
  "status.checking":"Checking…","status.up_to_date":"Up to date",
@@ -67,6 +67,7 @@
  "export.filename":"adn-autoskip-settings.json",
  "update.title":"Update available","update.subtitle":"v{old} → v{new}",
  "update.whats_new":"What's new","update.install_now":"Install now",
+ "update.installed_q":"Update installed?","update.reload_hint":"Reload page to activate the new version.",
  "update.remind_later":"Later","update.ignore_version":"Ignore",
  "update.ignore_confirm":"Ignore v{ver}?","update.view_release":"View release",
  "toast.intro":"⏭ Intro skipped","toast.recap":"⏭ Recap skipped",
@@ -99,7 +100,7 @@
  "sys.debug":"Debug-Logs","sys.update_check":"Auto Update-Check",
  "sys.export":"Exportieren","sys.import":"Importieren","sys.reset":"Zurücksetzen",
  "sys.check_now":"Jetzt prüfen","sys.checking":"Prüfe…",
- "sys.install":"Installieren","sys.release":"Release ↗",
+ "sys.install":"Installieren","sys.release":"Release ↗","sys.reload":"Seite neu laden",
  "sys.installed":"Installiert","sys.latest":"Neueste","sys.status":"Status",
  "sys.checked":"Geprüft","sys.error":"Fehler","sys.never":"nie",
  "status.checking":"Prüfe…","status.up_to_date":"Aktuell",
@@ -112,6 +113,7 @@
  "export.filename":"adn-autoskip-einstellungen.json",
  "update.title":"Update verfügbar","update.subtitle":"v{old} → v{new}",
  "update.whats_new":"Änderungen","update.install_now":"Installieren",
+ "update.installed_q":"Update installiert?","update.reload_hint":"Seite neu laden, um die neue Version zu aktivieren.",
  "update.remind_later":"Später","update.ignore_version":"Ignorieren",
  "update.ignore_confirm":"v{ver} ignorieren?","update.view_release":"Release ansehen",
  "toast.intro":"⏭ Intro übersprungen","toast.recap":"⏭ Recap übersprungen",
@@ -144,7 +146,7 @@
  "sys.debug":"Logs debug","sys.update_check":"Vérif. auto",
  "sys.export":"Exporter","sys.import":"Importer","sys.reset":"Réinitialiser",
  "sys.check_now":"Vérifier","sys.checking":"Vérification…",
- "sys.install":"Installer","sys.release":"Release ↗",
+ "sys.install":"Installer","sys.release":"Release ↗","sys.reload":"Recharger la page",
  "sys.installed":"Installé","sys.latest":"Dernière","sys.status":"Statut",
  "sys.checked":"Vérifié","sys.error":"Erreur","sys.never":"jamais",
  "status.checking":"Vérification…","status.up_to_date":"À jour",
@@ -157,6 +159,7 @@
  "export.filename":"adn-autoskip-parametres.json",
  "update.title":"Mise à jour","update.subtitle":"v{old} → v{new}",
  "update.whats_new":"Nouveautés","update.install_now":"Installer",
+ "update.installed_q":"Mise à jour installée ?","update.reload_hint":"Rechargez la page pour activer la nouvelle version.",
  "update.remind_later":"Plus tard","update.ignore_version":"Ignorer",
  "update.ignore_confirm":"Ignorer v{ver} ?","update.view_release":"Voir la release",
  "toast.intro":"⏭ Intro passée","toast.recap":"⏭ Récap passé",
@@ -644,6 +647,7 @@
     const show=S.updateCheckEnabled&&S.updateAvailable&&!isSnoozed()&&!isFS&&S.updateIgnoredVersion!==S.updateLastRemoteVersion;
     if(!show){updBanner.classList.remove("as-banner-show");return;}
     const rem=S.updateLastRemoteVersion;
+    const justInst=Date.now()-Number(S.updateLastSuccessfulUpdate||0)<120000;
 
     // FIX #7: Clear children properly instead of innerHTML
     while(updBanner.firstChild) updBanner.removeChild(updBanner.firstChild);
@@ -652,10 +656,10 @@
     const hdr=el("div","as-banner-hdr");
     const titleArea=el("div","as-banner-title-area");
     titleArea.append(
-      el("span","as-banner-icon",{textContent:"🔄"}),
+      el("span","as-banner-icon",{textContent:justInst?"✅":"🔄"}),
                      el("div","",[
-                       el("div","as-banner-t",{textContent:t("update.title")}),
-                        el("div","as-banner-sub",{textContent:t("update.subtitle",{old:SCRIPT_VERSION,new:rem})}),
+                       el("div","as-banner-t",{textContent:justInst?t("update.installed_q"):t("update.title")}),
+                        el("div","as-banner-sub",{textContent:justInst?t("update.reload_hint"):t("update.subtitle",{old:SCRIPT_VERSION,new:rem})}),
                      ])
     );
     const closeB=el("button","as-banner-x",{textContent:"×"});
@@ -664,7 +668,7 @@
     hdr.append(titleArea,closeB);updBanner.appendChild(hdr);
 
     // Changelog
-    if(S.updateChangelog){
+    if(!justInst&&S.updateChangelog){
       const sec=el("div","as-banner-cl");
       sec.appendChild(el("div","as-banner-cl-t",{textContent:t("update.whats_new")}));
       const r=renderCL(S.updateChangelog);
@@ -674,14 +678,22 @@
 
     // Actions
     const acts=el("div","as-banner-acts");
-    const instB=el("button","as-btn as-btn-accent",{textContent:t("update.install_now")});
-    instB.addEventListener("click",installUpd);
-    const snzB=el("button","as-btn",{textContent:t("update.remind_later")});
-    snzB.addEventListener("click",snooze);
-    const ignB=el("button","as-btn as-btn-ghost",{textContent:t("update.ignore_version")});
-    ignB.addEventListener("click",()=>{if(confirm(t("update.ignore_confirm",{ver:rem})))ignoreVer();});
-    acts.append(instB,snzB,ignB);
-    if(S.updateReleaseUrl)acts.appendChild(el("a","as-btn as-btn-link",{textContent:t("update.view_release"),href:S.updateReleaseUrl,target:"_blank"}));
+    if(justInst){
+      const relB=el("button","as-btn as-btn-accent",{textContent:t("sys.reload")});
+      relB.addEventListener("click",()=>location.reload());
+      const snzB=el("button","as-btn as-btn-ghost",{textContent:t("update.remind_later")});
+      snzB.addEventListener("click",snooze);
+      acts.append(relB,snzB);
+    } else {
+      const instB=el("button","as-btn as-btn-accent",{textContent:t("update.install_now")});
+      instB.addEventListener("click",installUpd);
+      const snzB=el("button","as-btn",{textContent:t("update.remind_later")});
+      snzB.addEventListener("click",snooze);
+      const ignB=el("button","as-btn as-btn-ghost",{textContent:t("update.ignore_version")});
+      ignB.addEventListener("click",()=>{if(confirm(t("update.ignore_confirm",{ver:rem})))ignoreVer();});
+      acts.append(instB,snzB,ignB);
+      if(S.updateReleaseUrl)acts.appendChild(el("a","as-btn as-btn-link",{textContent:t("update.view_release"),href:S.updateReleaseUrl,target:"_blank"}));
+    }
     updBanner.appendChild(acts);
     updBanner.classList.add("as-banner-show");
   }
@@ -1001,6 +1013,9 @@
       iB.addEventListener("click", installUpd); acts.appendChild(iB);
       if (S.updateReleaseUrl) acts.appendChild(el("a", "as-btn as-btn-link", { textContent: t("sys.release"), href: S.updateReleaseUrl, target: "_blank" }));
     }
+    const relB = el("button", "as-btn as-btn-ghost", { textContent: t("sys.reload") });
+    relB.addEventListener("click", () => location.reload());
+    acts.appendChild(relB);
     updInfo.appendChild(acts);
   }
 

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] - 2026-05-07
+
+### Added
+- **Reload page button** — Added a "Reload page" button to the System tab update section to manually reload the page and script after a Tampermonkey update install
+
 ## [2.0.3] - 2026-05-01
 
 ### Fixed
