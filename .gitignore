@@ -13,3 +13,6 @@ Thumbs.db
 
 # Local config
 opencode.json
+
+# Dependencies
+node_modules/

@@ -224,7 +224,7 @@
 
   /* ─── State ────────────────────────────────────────────── */
   let S = loadSettings();
-  let skipTimer = null, clickCD = new WeakMap(), pendingCD = new WeakMap();
+  let skipTimer = null; const clickCD = new WeakMap(), pendingCD = new WeakMap();
   let suppressedBtn = null, playerBtn = null, playerBtnActive = false;
   let pauseLabel = null, lastIntroT = null;
   let updTimer = null, updBanner = null, updInfo = null;
@@ -427,11 +427,11 @@
     try {
       const l = JSON.parse(localStorage.getItem(UPDATE_LOCK_KEY)||"{}");
       if (l.ts && now - l.ts < UPDATE_LOCK_TTL_MS) return false;
-    } catch{}
+    } catch{/* localStorage nicht verfügbar */}
     localStorage.setItem(UPDATE_LOCK_KEY, JSON.stringify({ts:now}));
     return true;
   }
-  function unlockUpd() { try{localStorage.removeItem(UPDATE_LOCK_KEY);}catch{} }
+  function unlockUpd() { try{localStorage.removeItem(UPDATE_LOCK_KEY);}catch{/* ignore */} }
 
   async function getRemote() {
     let ver=null, log_="", url_="";
