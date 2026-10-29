@@ -1,7 +1,7 @@
 # ADN Auto Skip — Technical Documentation
 
-> **Version:** 2.0.4
-> **Last updated:** 2026-05-07
+> **Version:** 2.0.5
+> **Last updated:** 2026-10-29
 > **Author:** Miximilian2270
 
 ---
@@ -136,6 +136,7 @@ const DEFAULTS = {
 
   // Behavior
   requirePlayerContext: false, // Only detect inside player
+  autoFullscreen: false,      // Enter fullscreen when playback starts
   jumpSeconds: 85,            // Hotkey jump distance
   showToasts: true,           // Show toast notifications
   debug: false,               // Console logging
@@ -165,7 +166,7 @@ const DEFAULTS = {
   updateLastSuccessfulUpdate: 0,
 
   // Internal
-  _settingsVersion: 5,        // Bumped on schema changes
+  _settingsVersion: 6,        // Bumped on schema changes
 };
 ```
 
@@ -190,6 +191,7 @@ On every `loadSettings()` call, the stored JSON is run through `migrate()`:
 | 3 | Added `showToasts`, `cheatsheetKey` (v1.10.0) |
 | 4 | CSS class rename, new UI (v2.0.0) |
 | 5 | F1 → Shift+? migration, type validation (v2.0.1) |
+| 6 | Added `autoFullscreen` (v2.0.5) |
 
 ### Save Flow
 
@@ -733,15 +735,31 @@ Manual "Check now" button bypasses the lock (`force = true`).
 ### Detection
 
 ```javascript
+function fsEl() {
+  return document.fullscreenElement || document.webkitFullscreenElement || null;
+}
 function setupFS() {
   const update = () => {
-    isFS = !!document.fullscreenElement;
+    isFS = !!fsEl();
     updateVis();
   };
   document.addEventListener("fullscreenchange", update);
   document.addEventListener("webkitfullscreenchange", update);  // Safari
+  document.addEventListener("webkitbeginfullscreen", update);   // iOS
+  document.addEventListener("webkitendfullscreen", update);     // iOS
 }
 ```
+
+### Auto Fullscreen
+
+When `autoFullscreen` is enabled, the script listens for `playing` events and
+requests fullscreen on the Video.js player root once per episode. The episode
+state resets on `loadstart`/`emptied`, so manually leaving fullscreen does not
+re-trigger it during the same episode.
+
+Browsers only allow `requestFullscreen()` from a user gesture. If playback
+starts via autoplay, the request is rejected and a one-time `pointerdown`/
+`click`/`touchend` fallback inside the player retries on the next interaction.
 
 ### UI Behavior in Fullscreen
 

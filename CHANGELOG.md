@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.5] - 2026-10-29
+
+### Added
+- **Auto fullscreen** — Optional setting to enter fullscreen when an episode starts playing. Triggers once per episode; if the browser blocks the request during autoplay, it retries on the next click inside the player.
+
+### Fixed
+- **Safari/iOS fullscreen detection** — `setupFS()` now also checks `webkitFullscreenElement` and listens for `webkitbeginfullscreen`/`webkitendfullscreen`.
+
 ## [2.0.4] - 2026-05-07
 
 ### Added

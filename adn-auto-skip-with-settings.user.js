@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      2.0.4
+// @version      2.0.5
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -21,7 +21,7 @@
 
   const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
   ? GM_info.script.version
-  : "2.0.4";
+  : "2.0.5";
 
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_LOCK_KEY = "ADN_AUTO_SKIP_UPDATE_LOCK";
@@ -42,6 +42,7 @@
       "panel.title":"ADN Auto Skip",
       "tab.general":"⚙ General","tab.skip":"⏭ Skip","tab.keys":"⌨ Keys","tab.system":"🔧 System",
       "general.enable":"Enable Auto Skip","general.delay":"Delay (ms)",
+ "general.auto_fullscreen":"Auto fullscreen on play",
  "general.theme":"Theme","general.pause_duration":"Pause (min)",
  "general.toasts":"Notifications",
  "skip.intro":"Skip Intro","skip.recap":"Skip Recap",
@@ -88,6 +89,7 @@
       "panel.title":"ADN Auto Skip",
       "tab.general":"⚙ Allgemein","tab.skip":"⏭ Skip","tab.keys":"⌨ Tasten","tab.system":"🔧 System",
       "general.enable":"Auto Skip aktivieren","general.delay":"Verzögerung (ms)",
+ "general.auto_fullscreen":"Automatisch Vollbild bei Wiedergabe",
  "general.theme":"Design","general.pause_duration":"Pause (Min)",
  "general.toasts":"Benachrichtigungen",
  "skip.intro":"Intro überspringen","skip.recap":"Recap überspringen",
@@ -134,6 +136,7 @@
  "panel.title":"ADN Auto Skip",
  "tab.general":"⚙ Général","tab.skip":"⏭ Passage","tab.keys":"⌨ Touches","tab.system":"🔧 Système",
  "general.enable":"Activer Auto Skip","general.delay":"Délai (ms)",
+ "general.auto_fullscreen":"Plein écran auto à la lecture",
  "general.theme":"Thème","general.pause_duration":"Pause (min)",
  "general.toasts":"Notifications",
  "skip.intro":"Passer l'intro","skip.recap":"Passer le récap",
@@ -190,14 +193,14 @@
     "introSkipKey","introBackKey","jumpSeconds","skipCurrentOnceKey",
     "pausedUntilTs","skipIntro","skipRecap","skipCredits",
     "skipNextEpisode","requirePlayerContext","debug","toggleKey",
-    "showToasts","cheatsheetKey",
+    "showToasts","cheatsheetKey","autoFullscreen",
     "updateCheckEnabled","updateLastCheckTs","updateAvailable",
     "updateLastRemoteVersion","updateLastResult","updateLastError",
     "updateChangelog","updateReleaseUrl","updateSnoozedUntilTs",
     "updateIgnoredVersion","updateLastSuccessfulUpdate",
     "_settingsVersion",
   ]);
-  const SETTINGS_VERSION = 5;
+  const SETTINGS_VERSION = 6;
   const DEFAULTS = {
     enabled:true, delayMs:3500, uiTheme:"dark", pauseMinutes:5,
     pauseKey:"F9", introSkipKey:"Control+ArrowRight", introBackKey:"Control+ArrowLeft",
@@ -205,6 +208,7 @@
     skipIntro:true, skipRecap:true, skipCredits:true, skipNextEpisode:true,
     requirePlayerContext:false, debug:false, toggleKey:"F8",
     showToasts:true, cheatsheetKey:"Shift+?",  // FIX #3: changed from F1
+    autoFullscreen:false,
     updateCheckEnabled:true, updateLastCheckTs:0, updateAvailable:false,
     updateLastRemoteVersion:"", updateLastResult:"idle", updateLastError:"",
     updateChangelog:"", updateReleaseUrl:"", updateSnoozedUntilTs:0,
@@ -493,10 +497,89 @@
   }
 
   /* ─── Fullscreen ───────────────────────────────────────── */
+  const autoFSState = new WeakMap();
+  let autoFSRetry = null;
+
+  function fsEl() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+  function playerRoot(v) {
+    return v.closest(".video-js,.vjs-player,[class*='player'],[id*='player']") || v.parentElement || v;
+  }
+  function clearFSRetry() {
+    if (!autoFSRetry) return;
+    for (const type of ["pointerdown", "click", "touchend"]) {
+      autoFSRetry.root.removeEventListener(type, autoFSRetry.handler, true);
+    }
+    autoFSRetry = null;
+  }
+  function armFSRetry(v) {
+    if (autoFSRetry?.video === v) return;
+    clearFSRetry();
+    const root = playerRoot(v);
+    const handler = () => {
+      clearFSRetry();
+      if (S.autoFullscreen && !fsEl()) requestFS(v, true);
+    };
+    autoFSRetry = { video: v, root, handler };
+    for (const type of ["pointerdown", "click", "touchend"]) {
+      root.addEventListener(type, handler, true);
+    }
+  }
+  function requestFS(v, isRetry) {
+    const root = playerRoot(v);
+    const target = (root.requestFullscreen || root.webkitRequestFullscreen) ? root : v;
+    const fn = target.requestFullscreen || target.webkitRequestFullscreen;
+    if (fn) {
+      try {
+        const p = fn.call(target);
+        if (p?.catch) p.catch(() => { if (!isRetry) armFSRetry(v); log("Fullscreen blocked"); });
+        return true;
+      } catch {
+        if (!isRetry) armFSRetry(v);
+        log("Fullscreen blocked");
+        return false;
+      }
+    }
+    if (typeof v.webkitEnterFullscreen === "function") {
+      try { v.webkitEnterFullscreen(); return true; }
+      catch { if (!isRetry) armFSRetry(v); log("Fullscreen blocked"); return false; }
+    }
+    return false;
+  }
+  function maybeAutoFS(v) {
+    if (!S.autoFullscreen || fsEl()) return;
+    const src = v.currentSrc || v.src || "";
+    const st = autoFSState.get(v) || { src, attempted: false };
+    if (st.src !== src) { st.src = src; st.attempted = false; }
+    if (st.attempted) return;
+    st.attempted = true;
+    autoFSState.set(v, st);
+    requestFS(v, false);
+  }
+  function resetAutoFS(v) {
+    autoFSState.set(v, { src: v.currentSrc || v.src || "", attempted: false });
+    if (autoFSRetry?.video === v) clearFSRetry();
+  }
+  function setupAutoFS() {
+    document.addEventListener("playing", e => {
+      if (e.target instanceof HTMLVideoElement) maybeAutoFS(e.target);
+    }, true);
+    for (const type of ["loadstart", "emptied"]) {
+      document.addEventListener(type, e => {
+        if (e.target instanceof HTMLVideoElement) resetAutoFS(e.target);
+      }, true);
+    }
+    for (const v of document.querySelectorAll("video")) {
+      if (!v.paused) maybeAutoFS(v);
+    }
+    window.addEventListener("beforeunload", clearFSRetry, { once: true });
+  }
   function setupFS() {
-    const u=()=>{isFS=!!document.fullscreenElement;updateVis();};
+    const u=()=>{isFS=!!fsEl();updateVis();};
     document.addEventListener("fullscreenchange",u);
     document.addEventListener("webkitfullscreenchange",u);
+    document.addEventListener("webkitbeginfullscreen",u);
+    document.addEventListener("webkitendfullscreen",u);
+    u();
   }
   function updateVis() {
     if (!gear) return;
@@ -1053,6 +1136,7 @@
       { label: t("tab.general"), panes: [
         mkCard(null, [
           mkRow(t("general.enable"), mkToggle("enabled")),
+               mkRow(t("general.auto_fullscreen"), mkToggle("autoFullscreen")),
                mkRow(t("general.delay"), mkNum("delayMs", 0, 60000, 50)),
                mkRow(t("general.theme"), mkSel("uiTheme", [{ v: "dark", l: "Dark" }, { v: "light", l: "Light" }])),
                mkRow(t("general.pause_duration"), mkNum("pauseMinutes", 1, 180, 1)),
@@ -1184,7 +1268,7 @@
 
   /* ─── Boot ─────────────────────────────────────────────── */
   function boot() {
-    buildPanel(); startObs(); setupKeys(); setupFS(); startUpdChecker(); scan();
+    buildPanel(); startObs(); setupKeys(); setupFS(); setupAutoFS(); startUpdChecker(); scan();
     log("v" + SCRIPT_VERSION, S);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });

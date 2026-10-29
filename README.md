@@ -34,6 +34,7 @@ A userscript that automatically skips intro, recap, credits, and next episode pr
 - **Status indicator** — Color-coded dot on the gear button
 - **Toast notifications** — Non-blocking slide-in feedback for all actions
 - **Fullscreen-aware** — UI auto-hides during fullscreen playback
+- **Auto fullscreen** — Optional fullscreen when an episode starts playing
 - **Responsive** — Adapts to small screens and viewport heights
 - **Click-outside-to-close** — Panel closes when clicking elsewhere
 - **Accessibility** — Focus-visible states, ARIA labels, keyboard navigation
@@ -110,6 +111,7 @@ Manual check: **System tab → Check now**
 | Setting | Description | Default |
 |---|---|---|
 | Enable Auto Skip | Master on/off switch | ✅ On |
+| Auto fullscreen | Enter fullscreen when playback starts | ❌ Off |
 | Delay (ms) | Wait before clicking skip | 3500 |
 | Theme | Dark or Light | Dark |
 | Pause (min) | Pause timer duration | 5 |
@@ -154,7 +156,7 @@ Press `Escape` to cancel.
 | **Migration** | `KNOWN_KEYS` whitelist, auto-cleanup, type validation |
 | **Cooldown** | 3s per-button via `WeakMap` |
 | **Multi-tab** | localStorage lock with 30s TTL, released on unload |
-| **Fullscreen** | `fullscreenchange` + `webkitfullscreenchange` |
+| **Fullscreen** | `fullscreenchange`, `webkitfullscreenchange`, optional auto-fullscreen on `playing` |
 | **i18n** | Key-based with `{var}` interpolation, 3 languages |
 | **UI** | CSS custom properties, `backdrop-filter` with `@supports` fallback |
 | **Toasts** | Non-blocking (`pointer-events: none`), auto-dismiss |
@@ -164,6 +166,7 @@ Press `Escape` to cancel.
 
 | Version | Date | Highlights |
 |---|---|---|
+| **2.0.5** | 2026-10-29 | Auto fullscreen on playback start (optional, once per episode). |
 | **2.0.2** | 2026-04-17 | UI fix: Restored dynamic panel height and moved tabs to the bottom to prevent layout jumping. |
 | **2.0.1** | 2025-01-24 | 11 bugfixes: toast click-through, cheatsheet leak, F1 conflict, export mutation, banner memory leak, responsive panel, lock cleanup, i18n fix, backdrop fallback, timer cleanup, import validation |
 | **2.0.0** | 2025-01-24 | Glassmorphism UI, FR localization, toasts, cheatsheet, import/export |
