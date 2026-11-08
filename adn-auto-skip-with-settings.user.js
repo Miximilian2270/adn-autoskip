@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ADN Auto Skip with Settings
 // @namespace    local.adn.autoskip
-// @version      2.1.0
+// @version      2.1.1
 // @description  Automatically skip intro/recap/credits/next episode on ADN with configurable settings.
 // @author       Miximilian2270
 // @match        *://*.animationdigitalnetwork.com/*
@@ -21,7 +21,7 @@
 
   const SCRIPT_VERSION = (typeof GM_info !== "undefined" && GM_info?.script?.version)
   ? GM_info.script.version
-  : "2.1.0";
+  : "2.1.1";
 
   const STORAGE_KEY = "ADN_AUTO_SKIP_SETTINGS_V1";
   const UPDATE_LOCK_KEY = "ADN_AUTO_SKIP_UPDATE_LOCK";
@@ -38,7 +38,7 @@
   /* ─── i18n ─────────────────────────────────────────────── */
   const LANG = {
     en: {
-      "gear.on":"SKIP ON","gear.off":"SKIP OFF","gear.paused":"PAUSED {sec}s","gear.update":"UPDATE",
+      "gear.on":"SKIP ON","gear.off":"SKIP OFF","gear.paused":"PAUSED {time}","gear.update":"UPDATE",
       "panel.title":"ADN Auto Skip",
       "tab.general":"General","tab.skip":"Skip","tab.keys":"Keys","tab.system":"System",
       "card.behavior":"Behavior","card.appearance":"Appearance","card.categories":"Categories",
@@ -68,7 +68,7 @@
       "status.checking":"Checking…","status.up_to_date":"Up to date",
       "status.update":"Update available","status.error":"Error",
       "status.disabled":"Disabled","status.locked":"Other tab checking","status.ready":"Ready",
-      "pause.active":"Auto Skip active","pause.paused":"Paused · {sec}s left","pause.off":"Auto Skip off",
+      "pause.active":"Auto Skip active","pause.paused":"Paused · {time} left","pause.off":"Auto Skip off",
       "pause.btn":"Pause","pause.resume":"Resume","pause.min":"min",
       "confirm.sure":"Sure? Click again",
       "import.success":"Settings imported","import.error":"Import failed: invalid file",
@@ -94,7 +94,7 @@
       "player.suppressed":"Skip cancelled","player.reenable":"Re-enable",
     },
     de: {
-      "gear.on":"SKIP AN","gear.off":"SKIP AUS","gear.paused":"PAUSE {sec}s","gear.update":"UPDATE",
+      "gear.on":"SKIP AN","gear.off":"SKIP AUS","gear.paused":"PAUSE {time}","gear.update":"UPDATE",
       "panel.title":"ADN Auto Skip",
       "tab.general":"Allgemein","tab.skip":"Skip","tab.keys":"Tasten","tab.system":"System",
       "card.behavior":"Verhalten","card.appearance":"Darstellung","card.categories":"Kategorien",
@@ -124,7 +124,7 @@
       "status.checking":"Prüfe…","status.up_to_date":"Aktuell",
       "status.update":"Update verfügbar","status.error":"Fehler",
       "status.disabled":"Deaktiviert","status.locked":"Anderer Tab prüft","status.ready":"Bereit",
-      "pause.active":"Auto Skip aktiv","pause.paused":"Pausiert · {sec}s","pause.off":"Auto Skip aus",
+      "pause.active":"Auto Skip aktiv","pause.paused":"Pausiert · {time}","pause.off":"Auto Skip aus",
       "pause.btn":"Pause","pause.resume":"Fortsetzen","pause.min":"Min",
       "confirm.sure":"Sicher? Nochmal klicken",
       "import.success":"Einstellungen importiert","import.error":"Import fehlgeschlagen",
@@ -150,7 +150,7 @@
       "player.suppressed":"Skip abgebrochen","player.reenable":"Wieder aktivieren",
     },
     fr: {
-      "gear.on":"SKIP ON","gear.off":"SKIP OFF","gear.paused":"PAUSE {sec}s","gear.update":"MAJ",
+      "gear.on":"SKIP ON","gear.off":"SKIP OFF","gear.paused":"PAUSE {time}","gear.update":"MAJ",
       "panel.title":"ADN Auto Skip",
       "tab.general":"Général","tab.skip":"Passage","tab.keys":"Touches","tab.system":"Système",
       "card.behavior":"Comportement","card.appearance":"Apparence","card.categories":"Catégories",
@@ -180,7 +180,7 @@
       "status.checking":"Vérification…","status.up_to_date":"À jour",
       "status.update":"Mise à jour dispo","status.error":"Erreur",
       "status.disabled":"Désactivé","status.locked":"Autre onglet vérifie","status.ready":"Prêt",
-      "pause.active":"Auto Skip actif","pause.paused":"En pause · {sec}s","pause.off":"Auto Skip désactivé",
+      "pause.active":"Auto Skip actif","pause.paused":"En pause · {time}","pause.off":"Auto Skip désactivé",
       "pause.btn":"Pause","pause.resume":"Reprendre","pause.min":"min",
       "confirm.sure":"Sûr ? Cliquez encore",
       "import.success":"Paramètres importés","import.error":"Échec de l'import",
@@ -700,6 +700,12 @@
   function isPaused(){return Number(S.pausedUntilTs||0)>Date.now();}
   function pauseMs(){return Math.max(0,Number(S.pausedUntilTs||0)-Date.now());}
   function doPause(m){const mins=Math.max(1,Math.min(180,Number(m)||S.pauseMinutes));save({pausedUntilTs:Date.now()+mins*60000});toast("toast.paused",{min:mins});}
+  // Restzeit als m:ss bzw. h:mm:ss (Pause bis 180 Min)
+  function fmtDur(ms){
+    const total=Math.max(0,Math.ceil(ms/1000)),h=Math.floor(total/3600),m=Math.floor(total%3600/60),sec=total%60;
+    const pad=n=>String(n).padStart(2,"0");
+    return h?`${h}:${pad(m)}:${pad(sec)}`:`${m}:${pad(sec)}`;
+  }
   function doResume(){save({pausedUntilTs:0});toast("toast.resumed");}
 
   /* ─── Key Util ─────────────────────────────────────────── */
@@ -986,12 +992,14 @@
     #as-gear:focus-visible{outline:none;box-shadow:0 0 0 2px var(--as-accent),var(--as-shadow);}
     #as-gear.as-idle{opacity:.15;}
     .as-gear-txt{max-width:0;opacity:0;overflow:hidden;white-space:nowrap;margin-left:0;transition:max-width .3s ease,opacity .2s,margin .3s;}
-    #as-gear:hover .as-gear-txt,#as-gear:focus-visible .as-gear-txt,#as-gear.as-expanded .as-gear-txt{max-width:160px;opacity:1;margin-left:8px;}
+    #as-gear:hover .as-gear-txt,#as-gear:focus-visible .as-gear-txt,#as-gear.as-expanded .as-gear-txt{max-width:240px;opacity:1;margin-left:8px;}
     .as-dot{width:9px;height:9px;border-radius:50%;background:var(--as-green);flex-shrink:0;margin-right:8px;transition:background .3s;}
     .as-dot.off{background:var(--as-red);}
     .as-dot.paused{background:var(--as-yellow);}
-    .as-dot.update{background:var(--as-red);animation:as-pulse 1.5s infinite;}
-    @keyframes as-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}
+    /* Update: Akzentfarbe mit Puls-Ring statt Rot, damit es nicht wie "Aus" aussieht */
+    .as-dot.update{background:var(--as-accent);animation:as-ring 1.8s ease-out infinite;}
+    #as-gear.as-update{border-color:var(--as-accent);}
+    @keyframes as-ring{0%{box-shadow:0 0 0 0 rgba(91,140,255,.6)}100%{box-shadow:0 0 0 7px rgba(91,140,255,0)}}
 
     /* ── Panel ── */
     #as-panel {
@@ -1155,7 +1163,7 @@
     .as-cs-hint{font:400 12px var(--as-font);color:var(--as-text2);text-align:center;margin-top:20px;}
 
     @media (prefers-reduced-motion: reduce){
-      #as-gear,#as-panel,.as-banner,.as-toast,.as-pane,.as-gear-txt{transition:none !important;animation:none !important;}
+      #as-gear,#as-panel,.as-banner,.as-toast,.as-pane,.as-gear-txt,.as-dot{transition:none !important;animation:none !important;}
     }
     `;
     document.head.appendChild(s);
@@ -1284,20 +1292,21 @@
     if (gear) {
       let txt, dot;
       if (!S.enabled) { txt = t("gear.off"); dot = "off"; }
-      else if (paused) { txt = t("gear.paused", { sec: Math.ceil(pauseMs() / 1000) }); dot = "paused"; }
+      else if (paused) { txt = t("gear.paused", { time: fmtDur(pauseMs()) }); dot = "paused"; }
       else { txt = t("gear.on"); dot = ""; }
       const upd = S.updateCheckEnabled && S.updateAvailable;
-      if (upd) dot = "update";
+      if (upd) { dot = "update"; txt = `${txt} · ${t("gear.update")}`; }
       if (gearTxt && gearTxt.textContent !== txt) gearTxt.textContent = txt;
       if (gearDot) gearDot.className = `as-dot ${dot}`;
       // Text dauerhaft zeigen, wenn der Status vom Normalzustand abweicht
       gear.classList.toggle("as-expanded", !!dot);
+      gear.classList.toggle("as-update", !!upd);
       gear.setAttribute("aria-label", `${t("panel.title")} – ${txt}${upd ? " · " + t("status.update") : ""}`);
       gear.setAttribute("aria-expanded", panel.classList.contains("as-open") ? "true" : "false");
     }
     if (pauseLabel) {
       const txt = !S.enabled ? t("pause.off")
-        : paused ? t("pause.paused", { sec: Math.ceil(pauseMs() / 1000) }) : t("pause.active");
+        : paused ? t("pause.paused", { time: fmtDur(pauseMs()) }) : t("pause.active");
       if (pauseLabel.textContent !== txt) pauseLabel.textContent = txt;
     }
     if (pauseToggleBtn) {

@@ -1,6 +1,6 @@
 # ADN Auto Skip with Settings
 
-![Version](https://img.shields.io/badge/version-2.1.0-blue)
+![Version](https://img.shields.io/badge/version-2.1.1-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-ADN-orange)
 ![Languages](https://img.shields.io/badge/languages-EN%20|%20DE%20|%20FR-yellow)
@@ -103,9 +103,9 @@ Manual check: **System tab → Check now**
 | 🟢 Green | Auto-skip active |
 | 🟡 Yellow | Temporarily paused |
 | 🔴 Red | Disabled |
-| 🔴 Pulsing | Update available |
+| 🔵 Pulsing ring | Update available (accent-colored border, „· UPDATE“ next to the status) |
 
-The status text next to the dot appears on hover and stays visible while auto-skip is off, paused or an update is available.
+The status text next to the dot appears on hover and stays visible while auto-skip is off, paused (remaining time as `m:ss`) or an update is available.
 
 3. Click the gear to open the **settings panel**
 4. Configure your preferences across four tabs
@@ -178,6 +178,7 @@ Press `Escape` to cancel, `×` to clear a hotkey. Duplicate hotkeys are marked r
 
 | Version | Date | Highlights |
 |---|---|---|
+| **2.1.1** | 2026-11-08 | Gear button: pause time as `m:ss`, update indicator in accent color instead of red. |
 | **2.1.0** | 2026-11-08 | UI overhaul: skip countdown in the player, toasts in fullscreen, language/theme/gear position options, hotkey conflict detection, accessibility; fixes for arrow-key hotkeys and update-section flicker. |
 | **2.0.5** | 2026-10-29 | Auto fullscreen on playback start (optional, once per episode). |
 | **2.0.2** | 2026-04-17 | UI fix: Restored dynamic panel height and moved tabs to the bottom to prevent layout jumping. |

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-11-08
+
+### Changed
+- **Pause countdown** — Gear button and panel footer show the remaining pause time as `m:ss` (e.g. `PAUSE 4:32`, `h:mm:ss` above one hour) instead of seconds.
+- **Update indicator** — The gear's update dot uses the accent color with a pulsing ring instead of a red pulse, so it can no longer be mistaken for „off“. The gear also gets an accent border and shows „… · UPDATE“ next to the status.
+
 ## [2.1.0] - 2026-11-08
 
 ### Added

@@ -1,6 +1,6 @@
 # ADN Auto Skip — Technical Documentation
 
-> **Version:** 2.1.0
+> **Version:** 2.1.1
 > **Last updated:** 2026-11-08
 > **Author:** Miximilian2270
 
@@ -461,6 +461,10 @@ document.addEventListener("click", e => {
 
 - Compact by default (dot + icon); the status text expands on hover/focus and
   stays visible while the status is not „on“ (off, paused, update).
+- Pause shows the remaining time as `m:ss` (`h:mm:ss` above one hour) via `fmtDur()`.
+- Update available: accent-colored dot with a pulsing ring (`.as-dot.update`,
+  `@keyframes as-ring`), accent border on the gear (`.as-update`) and
+  „… · UPDATE“ appended to the status text. Red stays reserved for „off“.
 - Position via `gearPos`; the update banner moves to the bottom when the gear
   is top-right.
 - `gearAutoHide`: after 3 s without mouse/keyboard activity the gear fades to
@@ -964,7 +968,7 @@ All classes use the `as-` prefix (short for "auto-skip"):
 | Toast out | translateY + scale | 0.3s | cubic-bezier(.2,.8,.2,1) |
 | Banner | translateY + scale | 0.4s | cubic-bezier(.2,.8,.2,1) |
 | Cheatsheet | opacity | 0.3s | ease |
-| Status dot pulse | opacity + scale | 1.5s | infinite |
+| Status dot (update) | box-shadow ring | 1.8s | infinite |
 | Gear hover | translateY | 0.25s | cubic-bezier(.4,0,.2,1) |
 | Toggle knob | translateX | 0.3s | cubic-bezier(.4,0,.2,1) |
 | Gear text | max-width + opacity | 0.3s | ease |
@@ -1061,7 +1065,7 @@ location.reload();
 All debug messages are prefixed with `[ADN-AS]`:
 
 ```text
-[ADN-AS] v2.1.0 {enabled: true, delayMs: 3500, ...}
+[ADN-AS] v2.1.1 {enabled: true, delayMs: 3500, ...}
 [ADN-AS] Click intro <a data-testid="skip-intro-button">
 [ADN-AS] Saved {skipIntro: false}
 ```
