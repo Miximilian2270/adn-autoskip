@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-11-08
+
+### Added
+- **Skip countdown in the player** — While a skip is pending, a button next to ADN's skip button shows „Skipping intro in 3s · Cancel [↓]“ with a progress ring. Click (or the cancel hotkey) cancels the skip; a second click re-enables it.
+- **Toasts in fullscreen** — Toasts and the cheatsheet are now rendered inside the fullscreen element (top center) instead of being hidden.
+- **Language selection** — Auto / English / Deutsch / Français in General → Appearance; the panel rebuilds instantly.
+- **Auto theme** — Follows the system color scheme (`prefers-color-scheme`); theme options are now translated.
+- **Gear position & auto-hide** — Gear can be placed in any corner; optional fade-out after 3 s of inactivity.
+- **Hotkey conflict detection** — Duplicate hotkeys are marked red with a warning; new × button to clear a hotkey.
+- **Accessibility** — Escape closes the panel, arrow-key tab navigation, ARIA roles for tabs/dialog, translated `aria-label`s, `prefers-reduced-motion` support.
+
+### Changed
+- **Gear button** — Compact (dot + icon); status text expands on hover or when status is not „on“.
+- **Delay** — Slider from 0 to 10 s in 0.5 s steps (values above 10 s are clamped on migration).
+- **Settings layout** — Titled cards (Behavior, Appearance, Categories, Detection, Hotkeys, Jump, Updates, Settings, Maintenance); „Jump seconds“ moved to the Keys tab.
+- **Tabs** — SVG icons instead of emojis; the tab bar sits on the gear side of the panel (bottom for bottom positions, top for top positions) so it stays in place when switching tabs.
+- **Footer** — Single Pause/Resume toggle with inline pause duration; „Reset all“ moved to the System tab as a danger button.
+- **Confirmations** — „Reset all“ and „Ignore version“ use an inline double-click confirmation instead of `confirm()`.
+- Settings version bumped to 7 (`lang`, `gearPos`, `gearAutoHide`).
+- Regenerated `DOCUMENTATION.md` via `create-docs.js`.
+
+### Fixed
+- **Re-recorded arrow-key hotkeys never triggered** — Stored values like `Control+→` are now normalized back to `arrowright` before matching.
+- **Update section flicker** — The System tab update info was rebuilt every second, causing hover flicker, focus loss and a re-enabled „Check now“ button during a check; it now only rebuilds when the update state changes.
+- **`npm run lint` on Windows** — The glob in `package.json` now uses double quotes so it works with `cmd.exe`.
+
 ## [2.0.5] - 2026-10-29
 
 ### Added

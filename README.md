@@ -1,6 +1,6 @@
 # ADN Auto Skip with Settings
 
-![Version](https://img.shields.io/badge/version-2.0.2-blue)
+![Version](https://img.shields.io/badge/version-2.1.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-ADN-orange)
 ![Languages](https://img.shields.io/badge/languages-EN%20|%20DE%20|%20FR-yellow)
@@ -9,7 +9,7 @@ A userscript that automatically skips intro, recap, credits, and next episode pr
 
 <p align="center">
   <img src="https://img.shields.io/badge/UI-Glassmorphism-blueviolet" />
-  <img src="https://img.shields.io/badge/themes-Dark%20%7C%20Light-informational" />
+  <img src="https://img.shields.io/badge/themes-Auto%20%7C%20Dark%20%7C%20Light-informational" />
   <img src="https://img.shields.io/badge/i18n-EN%20%7C%20DE%20%7C%20FR-success" />
 </p>
 
@@ -20,27 +20,28 @@ A userscript that automatically skips intro, recap, credits, and next episode pr
 - **Recap** — Skips episode recaps
 - **Credits/Ending** — Skips ending credits
 - **Next Episode** — Auto-advances to the next episode
-- **Configurable delay** — 0–60000ms before auto-clicking
+- **Visible countdown** — Button in the player shows „Skipping intro in 3s“ with a progress ring
+- **Cancel per click or hotkey** — Cancel the pending skip, re-enable with a second click
+- **Configurable delay** — Slider 0–10 s before auto-clicking
 - **Per-category toggle** — Enable/disable each skip type
-- **Suppress once** — Temporarily block the current skip button
 
 ### 🎨 Modern UI
 - **Glassmorphism design** — Frosted glass with backdrop blur
 - **Graceful fallback** — Solid backgrounds on browsers without `backdrop-filter`
 - **Card-based layout** — Settings grouped into visual cards
-- **Pill-style tabs** — ⚙ General · ⏭ Skip · ⌨ Keys · 🔧 System
-- **Dark & Light themes** — Seamless switching
+- **Pill-style tabs with icons** — General · Skip · Keys · System; the tab bar stays in place while switching
+- **Auto, Dark & Light themes** — Auto follows the system setting
 - **Micro-animations** — Smooth transitions on every interaction
-- **Status indicator** — Color-coded dot on the gear button
-- **Toast notifications** — Non-blocking slide-in feedback for all actions
-- **Fullscreen-aware** — UI auto-hides during fullscreen playback
+- **Compact gear button** — Color-coded dot + icon, status text on hover; position selectable, optional auto-hide
+- **Toast notifications** — Non-blocking slide-in feedback for all actions, also in fullscreen
+- **Fullscreen-aware** — Gear, panel and banner hide during fullscreen playback
 - **Auto fullscreen** — Optional fullscreen when an episode starts playing
 - **Responsive** — Adapts to small screens and viewport heights
-- **Click-outside-to-close** — Panel closes when clicking elsewhere
-- **Accessibility** — Focus-visible states, ARIA labels, keyboard navigation
+- **Click-outside-to-close** — Panel closes when clicking elsewhere or pressing `Escape`
+- **Accessibility** — Focus-visible states, ARIA roles and labels, arrow-key tab navigation, reduced-motion support
 
 ### ⌨ Hotkeys
-All hotkeys are fully customizable:
+All hotkeys are fully customizable. Duplicate assignments are marked red, and each hotkey can be cleared:
 
 | Default Key | Action |
 |---|---|
@@ -48,11 +49,11 @@ All hotkeys are fully customizable:
 | `F9` | Pause/resume auto-skip |
 | `Ctrl+→` | Skip intro (or jump forward) |
 | `Ctrl+←` | Jump back to intro start |
-| `↓` | Suppress current skip once |
+| `↓` | Cancel current skip |
 | `Shift+?` | Show hotkey cheatsheet |
 
 ### 🌐 Languages
-Fully translated with automatic detection:
+Fully translated; automatic detection or manual selection (General → Appearance):
 - 🇬🇧 **English**
 - 🇩🇪 **Deutsch**
 - 🇫🇷 **Français** (ADN is a French platform!)
@@ -104,6 +105,8 @@ Manual check: **System tab → Check now**
 | 🔴 Red | Disabled |
 | 🔴 Pulsing | Update available |
 
+The status text next to the dot appears on hover and stays visible while auto-skip is off, paused or an update is available.
+
 3. Click the gear to open the **settings panel**
 4. Configure your preferences across four tabs
 
@@ -111,11 +114,15 @@ Manual check: **System tab → Check now**
 | Setting | Description | Default |
 |---|---|---|
 | Enable Auto Skip | Master on/off switch | ✅ On |
+| Delay | Slider, wait before clicking skip (0–10 s) | 3.5 s |
 | Auto fullscreen | Enter fullscreen when playback starts | ❌ Off |
-| Delay (ms) | Wait before clicking skip | 3500 |
-| Theme | Dark or Light | Dark |
-| Pause (min) | Pause timer duration | 5 |
+| Theme | Auto, Dark or Light | Dark |
+| Language | Auto, English, Deutsch, Français | Auto |
 | Notifications | Show toast popups | ✅ On |
+| Button position | Corner of the gear button | Bottom right |
+| Hide button when idle | Fade the gear after 3 s of inactivity | ❌ Off |
+
+The footer shows the current status, the pause duration (minutes) and a Pause/Resume button.
 
 ### ⏭ Skip Tab
 | Setting | Description | Default |
@@ -125,16 +132,20 @@ Manual check: **System tab → Check now**
 | Skip Credits | Auto-skip endings | ✅ On |
 | Skip Next Episode | Auto-advance | ✅ On |
 | Require player context | Strict detection | ❌ Off |
-| Jump seconds | Hotkey jump distance | 85 |
 
 ### ⌨ Keys Tab
 Click any field → press your desired key combination → saved automatically.
-Press `Escape` to cancel.
+Press `Escape` to cancel, `×` to clear a hotkey. Duplicate hotkeys are marked red.
+
+| Setting | Description | Default |
+|---|---|---|
+| Jump seconds | Hotkey jump distance when no skip button is visible | 85 |
 
 ### 🔧 System Tab
 - Debug logging toggle
 - Auto update check toggle
 - Import / Export settings (JSON with type validation)
+- Reset all (click twice to confirm)
 - Update status with version comparison
 - Manual update check + install
 
@@ -153,19 +164,21 @@ Press `Escape` to cancel.
 | **Detection** | `data-testid` attributes on ADN skip buttons |
 | **Observation** | MutationObserver + 900ms polling fallback |
 | **Storage** | `localStorage` under `ADN_AUTO_SKIP_SETTINGS_V1` |
-| **Migration** | `KNOWN_KEYS` whitelist, auto-cleanup, type validation |
+| **Migration** | `KNOWN_KEYS` whitelist, auto-cleanup, type validation, value sanitizing (settings v7) |
 | **Cooldown** | 3s per-button via `WeakMap` |
 | **Multi-tab** | localStorage lock with 30s TTL, released on unload |
 | **Fullscreen** | `fullscreenchange`, `webkitfullscreenchange`, optional auto-fullscreen on `playing` |
 | **i18n** | Key-based with `{var}` interpolation, 3 languages |
 | **UI** | CSS custom properties, `backdrop-filter` with `@supports` fallback |
-| **Toasts** | Non-blocking (`pointer-events: none`), auto-dismiss |
+| **Toasts** | Non-blocking (`pointer-events: none`), auto-dismiss, rendered inside the fullscreen element in fullscreen |
+| **Countdown** | Pending clicks tracked in a `Map`, progress ring via `requestAnimationFrame` + `conic-gradient` |
 | **Cleanup** | All observers, timers, and locks cleaned on `beforeunload` |
 
 ## 📋 Version History
 
 | Version | Date | Highlights |
 |---|---|---|
+| **2.1.0** | 2026-11-08 | UI overhaul: skip countdown in the player, toasts in fullscreen, language/theme/gear position options, hotkey conflict detection, accessibility; fixes for arrow-key hotkeys and update-section flicker. |
 | **2.0.5** | 2026-10-29 | Auto fullscreen on playback start (optional, once per episode). |
 | **2.0.2** | 2026-04-17 | UI fix: Restored dynamic panel height and moved tabs to the bottom to prevent layout jumping. |
 | **2.0.1** | 2025-01-24 | 11 bugfixes: toast click-through, cheatsheet leak, F1 conflict, export mutation, banner memory leak, responsive panel, lock cleanup, i18n fix, backdrop fallback, timer cleanup, import validation |
