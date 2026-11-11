@@ -1,7 +1,7 @@
 # ADN Auto Skip — Technical Documentation
 
-> **Version:** 2.1.1
-> **Last updated:** 2026-11-08
+> **Version:** 2.1.2
+> **Last updated:** 2026-11-11
 > **Author:** Miximilian2270
 
 ---
@@ -453,7 +453,8 @@ document.addEventListener("click", e => {
   closePanel(false);
 });
 
-// Close on Escape (unless a hotkey field is capturing)
+// Close on Escape (unless a hotkey field is capturing) → closePanel(true, true):
+//   data-instant disables the transition for this close
 // Close on fullscreen → closePanel(false)
 ```
 
@@ -484,7 +485,7 @@ again“) for 3 s, the second click executes the action.
 - Gear: `aria-haspopup`, `aria-controls`, `aria-expanded`, status in `aria-label`
 - Escape closes the panel and returns focus to the gear
 - Toast container: `role="status"`, `aria-live="polite"`
-- `prefers-reduced-motion` disables panel/toast/tab animations
+- `prefers-reduced-motion` removes movement and keeps short opacity fades
 
 ### Input Types
 
@@ -610,8 +611,9 @@ Hotkeys are suppressed when focus is on:
 2. Shows all current hotkey bindings with formatted key badges (unassigned ones are skipped)
 3. Backdrop: semi-transparent black with `blur(6px)`
 4. Closes on **any** keypress or **any** click
-5. Toggle: pressing `Shift+?` again also closes it
-6. Rendered inside the fullscreen element when in fullscreen
+5. Opens and closes without animation (keyboard-triggered)
+6. Toggle: pressing `Shift+?` again also closes it
+7. Rendered inside the fullscreen element when in fullscreen
 
 ### Event Cleanup (v2.0.1 Fix)
 
@@ -905,6 +907,7 @@ All elements return to normal state when exiting fullscreen.
   --as-glass: blur(16px) saturate(1.4);
   --as-r: 14px;                       /* Border radius */
   --as-rs: 8px;                       /* Small radius */
+  --as-ease-out: cubic-bezier(.23,1,.32,1); /* Shared UI easing */
 }
 ```
 
@@ -960,21 +963,32 @@ All classes use the `as-` prefix (short for "auto-skip"):
 
 ### Animation Summary
 
+Easing token: `--as-ease-out: cubic-bezier(.23,1,.32,1)` (strong ease-out). Only
+the listed properties are transitioned, never `all`. Exits are faster than
+entrances. Anything opened or closed by keyboard is not animated.
+
 | Element | Animation | Duration | Easing |
 |---|---|---|---|
-| Panel open | translateY + scale | 0.35s | cubic-bezier(.2,.8,.2,1) |
-| Tab switch | translateY + opacity | 0.25s | ease |
-| Toast in | translateY + scale | 0.3s | cubic-bezier(.2,.8,.2,1) |
-| Toast out | translateY + scale | 0.3s | cubic-bezier(.2,.8,.2,1) |
-| Banner | translateY + scale | 0.4s | cubic-bezier(.2,.8,.2,1) |
-| Cheatsheet | opacity | 0.3s | ease |
+| Panel open | translateY + scale + opacity | 200ms | `--as-ease-out` |
+| Panel close | translateY + scale + opacity | 150ms (`Escape`: instant) | `--as-ease-out` |
+| Tab switch | none | – | – |
+| Toast in | translateY + scale(.96) + opacity | 250ms | `--as-ease-out` |
+| Toast out | same direction as in | 180ms | `--as-ease-out` |
+| Banner in / out | translateY + scale(.97) + opacity | 250ms / 180ms | `--as-ease-out` |
+| Cheatsheet | none (keyboard-triggered) | – | – |
+| Press feedback (`:active`) | scale(.97) | 160ms | `--as-ease-out` |
+| Hover (gear, buttons) | background / shadow only | 150ms | ease |
+| Toggle knob | translateX | 200ms | `--as-ease-out` |
+| Gear text | max-width + margin, opacity delayed 60ms | 200ms / 150ms | `--as-ease-out` / ease |
 | Status dot (update) | box-shadow ring | 1.8s | infinite |
-| Gear hover | translateY | 0.25s | cubic-bezier(.4,0,.2,1) |
-| Toggle knob | translateX | 0.3s | cubic-bezier(.4,0,.2,1) |
-| Gear text | max-width + opacity | 0.3s | ease |
-| Countdown ring | conic-gradient via `--p` | per frame | linear |
+| Countdown ring | conic-gradient via `--p` on `.as-pb-ring` | per frame | linear |
 
-All transitions are disabled with `prefers-reduced-motion: reduce`.
+Gear hover effects are wrapped in `@media (hover: hover) and (pointer: fine)` so a
+tap on touch devices does not trigger them.
+
+With `prefers-reduced-motion: reduce` all movement (transforms, pulse ring,
+indeterminate progress bar) is removed; panel, banner and toasts keep a short
+150ms opacity fade.
 
 ---
 
@@ -1065,7 +1079,7 @@ location.reload();
 All debug messages are prefixed with `[ADN-AS]`:
 
 ```text
-[ADN-AS] v2.1.1 {enabled: true, delayMs: 3500, ...}
+[ADN-AS] v2.1.2 {enabled: true, delayMs: 3500, ...}
 [ADN-AS] Click intro <a data-testid="skip-intro-button">
 [ADN-AS] Saved {skipIntro: false}
 ```

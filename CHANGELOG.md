@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.2] - 2026-11-11
+
+### Changed
+- **Motion polish** (based on Emil Kowalski's design engineering rules):
+  - Shared easing token `--as-ease-out: cubic-bezier(.23,1,.32,1)`; all `transition: all` replaced by explicit properties.
+  - Panel opens in 200 ms and closes in 150 ms; closing with `Escape` is instant.
+  - Cheatsheet (keyboard-only) and tab switching are no longer animated.
+  - Toasts enter and leave on the same side (bottom, or top in fullscreen), 250 ms in / 180 ms out, from `scale(.96)`.
+  - Update banner 250 ms in / 180 ms out instead of 400 ms; toggles 200 ms.
+  - Press feedback (`scale(.97)` on `:active`) for gear, buttons, tabs, close buttons and the player countdown button; gear hover only on devices with a real pointer, without lift.
+  - Countdown progress (`--p`) is set on the ring element instead of the button.
+  - `prefers-reduced-motion`: movement is removed, short opacity fades (150 ms) remain.
+
 ## [2.1.1] - 2026-11-08
 
 ### Changed

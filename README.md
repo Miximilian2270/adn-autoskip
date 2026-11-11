@@ -1,6 +1,6 @@
 # ADN Auto Skip with Settings
 
-![Version](https://img.shields.io/badge/version-2.1.1-blue)
+![Version](https://img.shields.io/badge/version-2.1.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-ADN-orange)
 ![Languages](https://img.shields.io/badge/languages-EN%20|%20DE%20|%20FR-yellow)
@@ -31,7 +31,7 @@ A userscript that automatically skips intro, recap, credits, and next episode pr
 - **Card-based layout** — Settings grouped into visual cards
 - **Pill-style tabs with icons** — General · Skip · Keys · System; the tab bar stays in place while switching
 - **Auto, Dark & Light themes** — Auto follows the system setting
-- **Micro-animations** — Smooth transitions on every interaction
+- **Micro-animations** — Short, purposeful transitions (≤ 250 ms, shared ease-out curve); keyboard-triggered UI appears instantly
 - **Compact gear button** — Color-coded dot + icon, status text on hover; position selectable, optional auto-hide
 - **Toast notifications** — Non-blocking slide-in feedback for all actions, also in fullscreen
 - **Fullscreen-aware** — Gear, panel and banner hide during fullscreen playback
@@ -178,6 +178,7 @@ Press `Escape` to cancel, `×` to clear a hotkey. Duplicate hotkeys are marked r
 
 | Version | Date | Highlights |
 |---|---|---|
+| **2.1.2** | 2026-11-11 | Motion polish: faster, explicit transitions with a shared easing curve, press feedback, no animation for keyboard-triggered UI, reduced-motion keeps fades. |
 | **2.1.1** | 2026-11-08 | Gear button: pause time as `m:ss`, update indicator in accent color instead of red. |
 | **2.1.0** | 2026-11-08 | UI overhaul: skip countdown in the player, toasts in fullscreen, language/theme/gear position options, hotkey conflict detection, accessibility; fixes for arrow-key hotkeys and update-section flicker. |
 | **2.0.5** | 2026-10-29 | Auto fullscreen on playback start (optional, once per episode). |
